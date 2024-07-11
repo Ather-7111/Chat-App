@@ -155,7 +155,7 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
   };
 
   useEffect(() => {
-    console.log("file extension-->", ext);
+    console.log("file extension--------->", ext);
   }, [ext]);
 
   function formatDate(dateString) {
