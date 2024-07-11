@@ -1,3 +1,4 @@
+const { getAllAttachments } = require("./actions/attachment");
 const { createMessage } = require("./actions/message");
 const { createNotification } = require("./actions/notification");
 
@@ -7,6 +8,12 @@ const io = require("socket.io")(3000, {
     methods: ["GET", "POST"],
   },
 });
+
+// async function testFunction(){
+//   const k = await getAllAttachments("clygzx7p10001pa9k4qiwj21w");
+// console.log(k)
+// }
+// testFunction()
 
 io.on("connection", (socket) => {
   console.log("Socket connected --> id : ", socket.id);
@@ -54,5 +61,6 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 });
+
 
 console.log("Server is running on port 3000");
