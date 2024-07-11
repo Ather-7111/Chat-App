@@ -1,0 +1,76 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:music@7111@localhost:5432/chat-app?schema=public"
+}
+
+model Message {
+  id           String   @id @default(cuid())
+  text         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sender       User     @relation(fields: [senderId], references: [id], name: "Sender")
+  senderId     String
+  conversation Chat     @relation(fields: [chatId], references: [id])
+  chatId       String
+  receiver     User?    @relation(fields: [receiverId], references: [id], name: "Receiver")
+  receiverId   String
+  attachementUrl String     @default("")
+  Notification Notification[]
+  Attachment  Attachment[]
+}
+
+model User {
+  id       String    @id @default(cuid())
+  name     String
+  sent     Message[] @relation(name: "Sender")
+  received Message[] @relation(name: "Receiver")
+
+  user1 Chat[] @relation(name: "USER_1")
+  user2 Chat[] @relation(name: "USER_2")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  name      String?
+  user1     User      @relation(fields: [user1ID], references: [id], name: "USER_1")
+  user1ID   String
+  user2     User      @relation(fields: [user2ID], references: [id], name: "USER_2")
+  user2ID   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  message   Message[]
+
+  Notification Notification[]
+  Attachment  Attachment[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  message   Message  @relation(fields: [messageId], references: [id])
+  messageId String
+
+  chat   Chat   @relation(fields: [chatId], references: [id])
+  chatId String
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  message   Message  @relation(fields: [messageId], references: [id])
+  messageId String
+
+  chat   Chat   @relation(fields: [chatId], references: [id])
+  chatId String
+}
