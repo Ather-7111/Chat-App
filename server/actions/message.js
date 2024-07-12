@@ -19,7 +19,7 @@ const bufferToDataURI = (buffer, filetype) => {
 
 exports.createMessage = async function (messageCreate) {
   try {
-    console.log("hi", messageCreate);
+    // console.log("hi", messageCreate);
     const buffer = messageCreate.buffer;
     const filetype = messageCreate.filetype;
     const mime = messageCreate.mime;
@@ -35,29 +35,35 @@ exports.createMessage = async function (messageCreate) {
       },
     });
 
-    let resourceType;
+    // let resourceType;
     let format;
     switch (filetype) {
-      case "application/pdf":
-        resourceType = "auto";
-        format = "pdf";
-        break;
+      // case "application/pdf":
+      //   resourceType = "auto";
+      //   format = "pdf";
+      //   break;
       case "application/vnd.ms-powerpoint":
-        resourceType = "auto";
+        // resourceType = "auto";
         format = "ppt";
         break;
       // ... more cases
       default:
         resourceType = "auto";
-        format = "jpeg" || "png";
+        format = null
     }
+
+
+
+
+    
     // const dataURI = bufferToDataURI(buffer, filetype);
     if (mime) {
-      console.log("sigma", resourceType, filetype);
+      // console.log("sigma", resourceType, filetype);
 
       const uploadResult = await cloudinary.uploader.upload(mime, {
+        // format:"auto",
         format:format,
-        resource_type:"raw"
+        resource_type:"auto"
         
 
       });

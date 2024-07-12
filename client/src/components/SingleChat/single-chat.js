@@ -35,7 +35,7 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
           message.attachmentUrl &&
           message.senderId !== loggedInUserId
         ) {
-          console.log("attchment message-->", message);
+          console.log("attachment message-->", message);
           setInbox((prevInbox) => [...prevInbox, message]);
         }
       });
@@ -63,16 +63,29 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
         selectedUser.id,
         chat.id
       );
-      // const attachMsgs=allMessages.filter((message)=>message.text==="")
-      let msgIds=[]
-      allMessages.forEach((e)=>{if(e.text===""){
-         msgIds.push(e.id)
-      }})
-      const attachments=await getAllAttachmentsUsingMsgArray(msgIds)
-      console.log("bhola",attachments)
 
-      console.log("All messages:", allMessages.length, allMessages);
-      setInbox(allMessages);
+      // Extract message IDs for attachment messages
+      const msgIds = allMessages
+        .filter((message) => !message.text)
+        .map((message) => message.id);
+
+      // Fetch attachments
+      const attachments = await getAllAttachmentsUsingMsgArray(msgIds);
+      console.log("attachments-->", attachments);
+
+      // Combine messages and attachments
+      const combinedMessages = allMessages.map((message) => {
+        const attachment = attachments.find(
+          (att) => att.messageId === message.id
+        );
+        return {
+          ...message,
+          attachment,
+        };
+      });
+
+      console.log("All messages:", combinedMessages.length, combinedMessages);
+      setInbox(combinedMessages);
 
       // Scroll to the bottom when messages are loaded
       if (chatHistoryRef.current) {
@@ -91,7 +104,6 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
     }
 
     let attachmentUrl = null;
-    let attachUrl;
     if (file) {
       const fileReader = new FileReader();
       console.log(fileReader);
@@ -104,9 +116,7 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
           "data:application/pdf",
           "data:image/jpeg"
         );
-        attachUrl = jpegBase64String;
-        console.log("jpegBasedString", attachUrl);
-        setFilePreviewUrl(attachUrl);
+        setFilePreviewUrl(jpegBase64String);
 
         const newMessage = {
           filetype: file?.type,
@@ -164,7 +174,8 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
 
   useEffect(() => {
     console.log("file extension--------->", ext);
-  }, [ext]);
+    console.log("inbox-->", inbox);
+  }, [ext, inbox]);
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -215,104 +226,30 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                 {/* For text */}
                 {msg.text && <p>{msg.text}</p>}
 
-                {/* For pdf attachments */}
-                {msg.attachmentUrl &&
-                  (msg.attachmentUrl.startsWith("data:application/pdf") ||
-                    msg.attachmentUrl.endsWith(".pdf")) && (
-                    <div className="mt-2 w-64">
-                      {/* {msg.attachmentUrl.endsWith(".pdf") && ( */}
-                      <div>
-                        <div
-                          className=" w-full h-36 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url('https://ja.nsommer.dk/img/pdf.jpg')`,
-                          }}
-                        ></div>
-                        <div className="flex justify-between items-center px-3 py-2">
-                          <div>
-                            <FaFilePdf className="text-xl" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm">View PDF Attachment</h3>
-                          </div>
-                          <div>
-                            <a
-                              href={msg.attachmentUrl}
-                              target="_blank"
-                              download
-                            >
-                              <IoMdDownload className="text-xl" />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                      {/* )} */}
-                      {/* {msg.attachmentUrl.endsWith(".ppt") && (
-                      <div>
-                        <div
-                          className=" w-full h-36 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url('https://99designs-blog.imgix.net/blog/wp-content/uploads/2014/03/powerpoint.jpg?auto=format&q=60&fit=max&w=930')`,
-                          }}
-                        ></div>
-                        <div className="flex justify-between items-center px-3 py-2">
-                          <div>
-                            <FaFilePowerpoint className="text-xl" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm">View PPT Attachment</h3>
-                          </div>
-                          <div>
-                            <a
-                              href={msg.attachmentUrl}
-                              target="_blank"
-                              download
-                            >
-                              <IoMdDownload className="text-xl" />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {msg.attachmentUrl.endsWith(".doc") && (
-                      <div>
-                        <p>DOC Attachment</p>
-                      </div>
-                    )}
-                    {msg.attachmentUrl.endsWith(".mp4") && (
-                      <div>
-                        <video
-                          src={msg.attachmentUrl}
-                          controls
-                          className="w-full h-40"
-                        ></video>
-                      </div>
-                    )}
-
-                    {msg.attachmentUrl.endsWith(".png") ||
-                      msg.attachmentUrl.endsWith(".jpeg") ||
-                      (msg.attachmentUrl.endsWith(".jpg") && (
-                        <div>
-                          <img
-                            src={msg.attachmentUrl}
-                            alt="Attachment Preview"
-                            className="w-full h-40"
-                          />
-                        </div>
-                      ))} */}
-                    </div>
-                  )}
-
-                {/* {msg.attachmentUrl && (
-                  <>
-                    <div>
-                      <FileViewer
-                        fileType={ext}
-                        filePath={msg.attachmentUrl}
-                      />
-                    </div>
-                  </>
-                )} */}
+                {/*/!* For attachments *!/*/}
+                {/*{msg.attachment && (*/}
+                {/*    <div className="mt-2 w-64">*/}
+                {/*        <div>*/}
+                {/*            <div*/}
+                {/*                className="w-full h-36 bg-cover bg-center"*/}
+                {/*                style={{*/}
+                {/*                    backgroundImage: `url('https://ja.nsommer.dk/img/pdf.jpg')`,*/}
+                {/*                }}*/}
+                {/*            ></div>*/}
+                {/*            <div className="flex justify-between items-center px-3 py-2">*/}
+                {/*                <FaFilePdf className="text-xl"/>*/}
+                {/*                <h3 className="text-sm">View PDF Attachment</h3>*/}
+                {/*                <a*/}
+                {/*                    href={msg.attachment.url}*/}
+                {/*                    target="_blank"*/}
+                {/*                    download*/}
+                {/*                >*/}
+                {/*                    <IoMdDownload className="text-xl"/>*/}
+                {/*                </a>*/}
+                {/*            </div>*/}
+                {/*        </div>*/}
+                {/*    </div>*/}
+                {/*)}*/}
 
                 <small className="flex justify-end mt-3">
                   {formatDate(msg.createdAt)}
