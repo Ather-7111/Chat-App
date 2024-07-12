@@ -4,6 +4,7 @@ import { IoMdSend, IoMdDownload } from "react-icons/io";
 import { MdAttachment } from "react-icons/md";
 import { getChat } from "@/lib/actions/chat";
 import { FaFilePdf, FaFilePowerpoint } from "react-icons/fa";
+import { getAllAttachmentsUsingMsgArray } from "@/lib/actions/attachement";
 
 export default function SingleChatPage({ selectedUser, chat, socket }) {
   const [inbox, setInbox] = useState([]);
@@ -62,6 +63,13 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
         selectedUser.id,
         chat.id
       );
+      // const attachMsgs=allMessages.filter((message)=>message.text==="")
+      let msgIds=[]
+      allMessages.forEach((e)=>{if(e.text===""){
+         msgIds.push(e.id)
+      }})
+      const attachments=await getAllAttachmentsUsingMsgArray(msgIds)
+      console.log("bhola",attachments)
 
       console.log("All messages:", allMessages.length, allMessages);
       setInbox(allMessages);

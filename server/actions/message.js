@@ -62,7 +62,7 @@ exports.createMessage = async function (messageCreate) {
 
       });
       console.log("sigma", uploadResult);
-      const Attachment = await prisma.attachment.create({
+      const attachment = await prisma.attachment.create({
         data: {
           url: uploadResult.secure_url,
           messageId: message.id,
@@ -73,19 +73,18 @@ exports.createMessage = async function (messageCreate) {
           chat: true,
         },
       });
-      const attachments=await getAllAttachments(message.id)
+      // const attachments=await getAllAttachments(message.id)
 
       return {
         ...message,
-        attachmentUrl: mime ? Attachment.url : null,
-        attachments
+        // attachmentUrl: mime ? Attachment.url : null,
+        attachment
       };
     }
     // Include the Attachment URL in the returned message
     else {
       return {
-        ...message,
-        attachmentUrl: mime ? Attachment.url : null,
+        ...message
       };
     }
   } catch (error) {

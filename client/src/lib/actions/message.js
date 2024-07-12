@@ -3,7 +3,7 @@ import { connect } from "../db";
 
 export async function getAllMessages(userId, otherUserId, chatId) {
   try {
-    console.log("Fetching messages", { userId, otherUserId, chatId });
+    // console.log("Fetching messages", { userId, otherUserId, chatId });
     let prisma = await connect();
     const messages = await prisma.message.findMany({
       where: {
@@ -27,11 +27,11 @@ export async function getAllMessages(userId, otherUserId, chatId) {
         createdAt: "asc",
       },
     });
-    console.log(messages.map((msg) => ({
-      ...msg,
-      from: msg.senderId,
-      to: msg.receiverId,
-    })))
+    // console.log(messages.map((msg) => ({
+    //   ...msg,
+    //   from: msg.senderId,
+    //   to: msg.receiverId,
+    // })))
     return messages.map((msg) => ({
       ...msg,
       from: msg.senderId,
