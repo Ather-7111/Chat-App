@@ -17,6 +17,21 @@ const bufferToDataURI = (buffer, filetype) => {
   return `data:${filetype};base64,${base64}`;
 };
 
+
+
+function getformat(fileType){
+  let object={
+    "image/png":"png",
+    "image/jpeg":"jpg",
+    "application/pdf":"pdf",
+    "video/mp4":"mp4",
+    "application/vnd.ms-powerpoint":"ppt",
+    "text/plain":"txt",
+    "application/vnd.openxmlformats":"docx"
+  };
+   return object[fileType];
+  
+}
 exports.createMessage = async function (messageCreate) {
   try {
     // console.log("hi", messageCreate);
@@ -36,21 +51,25 @@ exports.createMessage = async function (messageCreate) {
     });
 
     // let resourceType;
-    let format;
-    switch (filetype) {
-      // case "application/pdf":
-      //   resourceType = "auto";
-      //   format = "pdf";
-      //   break;
-      case "application/vnd.ms-powerpoint":
-        // resourceType = "auto";
-        format = "ppt";
-        break;
-      // ... more cases
-      default:
-        resourceType = "auto";
-        format = null
-    }
+    // let format;
+    // switch (filetype) {
+    //   // case "application/pdf":
+    //   //   resourceType = "auto";
+    //   //   format = "pdf";
+    //   //   break;
+    //   case "application/vnd.ms-powerpoint":
+    //     // resourceType = "auto";
+    //     format = "ppt";
+    //     break;
+    //   case "text/plain":
+    //     // resourceType = "auto";
+    //     format = "txt";
+    //     break;
+    //   // ... more cases
+    //   default:
+    //     resourceType = "auto";
+    //     format = null;
+    // }
 
 
 
@@ -61,12 +80,12 @@ exports.createMessage = async function (messageCreate) {
       // console.log("sigma", resourceType, filetype);
 
       const uploadResult = await cloudinary.uploader.upload(mime, {
-        // format:"auto",
-        format:format,
-        resource_type:"auto"
+        format:getformat(filetype),
+        resource_type:"auto",
         
 
       });
+      
       console.log("sigma", uploadResult);
       const attachment = await prisma.attachment.create({
         data: {

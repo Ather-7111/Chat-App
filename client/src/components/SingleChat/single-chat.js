@@ -227,29 +227,31 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                 {msg.text && <p>{msg.text}</p>}
 
                 {/*/!* For attachments *!/*/}
-                {/*{msg.attachment && (*/}
-                {/*    <div className="mt-2 w-64">*/}
-                {/*        <div>*/}
-                {/*            <div*/}
-                {/*                className="w-full h-36 bg-cover bg-center"*/}
-                {/*                style={{*/}
-                {/*                    backgroundImage: `url('https://ja.nsommer.dk/img/pdf.jpg')`,*/}
-                {/*                }}*/}
-                {/*            ></div>*/}
-                {/*            <div className="flex justify-between items-center px-3 py-2">*/}
-                {/*                <FaFilePdf className="text-xl"/>*/}
-                {/*                <h3 className="text-sm">View PDF Attachment</h3>*/}
-                {/*                <a*/}
-                {/*                    href={msg.attachment.url}*/}
-                {/*                    target="_blank"*/}
-                {/*                    download*/}
-                {/*                >*/}
-                {/*                    <IoMdDownload className="text-xl"/>*/}
-                {/*                </a>*/}
-                {/*            </div>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*)}*/}
+                {msg.attachment && (
+                  <div className="mt-2 w-64">
+                    {msg.attachment.url && (
+                      <div>
+                        <div
+                          className="w-full h-36 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url('https://ja.nsommer.dk/img/pdf.jpg')`,
+                          }}
+                        ></div>
+                        <div className="flex justify-between items-center px-3 py-2">
+                          <FaFilePdf className="text-xl" />
+                          <h3 className="text-sm">View PDF Attachment</h3>
+                          <a href={msg.attachment.url} target="_blank" download>
+                            <IoMdDownload className="text-xl" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {msg.attachment.url.endsWith('jpg'|| 'png' || 'jpeg')
+                    
+                    }
+                  </div>
+                )}
 
                 <small className="flex justify-end mt-3">
                   {formatDate(msg.createdAt)}
