@@ -1,4 +1,5 @@
 const { Prisma, PrismaClient } = require("@prisma/client");
+const { getAllAttachments } = require("./attachment");
 const prisma = new PrismaClient();
 const cloudinary = require("cloudinary").v2;
 
@@ -72,21 +73,12 @@ exports.createMessage = async function (messageCreate) {
           chat: true,
         },
       });
-      const messageUpdate = await prisma.message.update({
-        where: {
-          id: message.id,
-        },
-        data: { attachmentUrl: uploadResult.secure_url },
-        include: {
-          sender: true,
-          conversation: true,
-          receiver: true,
-        },
-      });
+      const attachments=await getAllAttachments(message.id)
 
       return {
         ...message,
         attachmentUrl: mime ? Attachment.url : null,
+        attachments
       };
     }
     // Include the Attachment URL in the returned message

@@ -41,7 +41,7 @@ io.on("connection", (socket) => {
         receiverId: message.receiverId,
         buffer: message.buffer,
         filetype: message.filetype,
-        mime: message.attachementUrl,
+        mime: message.attachmentUrl,
       });
 
       const notification = await createNotification({
