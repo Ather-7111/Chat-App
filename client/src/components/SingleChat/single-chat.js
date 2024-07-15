@@ -5,6 +5,8 @@ import {MdAttachment} from "react-icons/md";
 import {getChat} from "@/lib/actions/chat";
 import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgArray} from "@/lib/actions/attachement";
+import Gallery from "react-photo-gallery";
+
 
 export default function SingleChatPage({selectedUser, chat, socket}) {
     const [inbox, setInbox] = useState([]);
@@ -121,36 +123,70 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         }
     };
 
+    const handleFileUpload = (event) => {
+        const selectedFiles = event.target.files;
+        const previews = [];
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            previews.push(URL.createObjectURL(file));
+        }
+
+        setFile(selectedFiles);
+        setFilePreview(previews);
+    };
+
     const handleSendMessage = async (event) => {
         event.preventDefault();
+        console.log(event);
 
-        if (!message.trim() && !file) {
+        if (!message.trim() && (!file || file.length === 0)) {
             return;
         }
 
-        let attachmentUrl = null;
-        if (file) {
-            const fileReader = new FileReader();
-            fileReader.onloadend = () => {
-                attachmentUrl = fileReader.result;
-                const newMessage = {
-                    filetype: file.type,
-                    senderId: loggedInUserId,
-                    receiverId: selectedUser.id,
-                    text: message,
-                    createdAt: new Date().toISOString(),
-                    chatId: chat.id,
-                    attachmentUrl
-                };
+        let newMessages = [];
 
-                setInbox((prevInbox) => [...prevInbox, newMessage]);
+        if (file && file.length > 0) {
+            const readFile = (file) => {
+                return new Promise((resolve, reject) => {
+                    const fileReader = new FileReader();
+                    fileReader.onloadend = () => {
+                        const attachmentUrl = fileReader.result;
+                        const newMessage = {
+                            filetype: file.type,
+                            senderId: loggedInUserId,
+                            receiverId: selectedUser.id,
+                            text: message,
+                            createdAt: new Date().toISOString(),
+                            chatId: chat.id,
+                            attachmentUrl,
+                        };
+                        resolve(newMessage);
+                    };
+                    fileReader.onerror = reject;
+                    fileReader.readAsDataURL(file);
+                });
+            };
+
+            try {
+                for (let i = 0; i < file.length; i++) {
+                    const currentFile = file[i];
+                    const newMessage = await readFile(currentFile);
+                    newMessages.push(newMessage);
+                }
+
+                setInbox((prevInbox) => [...prevInbox, ...newMessages]);
                 setMessage("");
                 setFile(null);
                 setFilePreview(null);
 
-                socket.emit("message", newMessage);
-            };
-            fileReader.readAsDataURL(file);
+                console.log("new msgs", newMessages)
+                socket.emit("message", newMessages);
+
+
+            } catch (error) {
+                console.error("Error reading files:", error);
+            }
         } else {
             const newMessage = {
                 filetype: "",
@@ -161,22 +197,14 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 chatId: chat.id,
             };
 
-            setInbox((prevInbox) => [...prevInbox, newMessage]);
+            newMessages = [newMessage];
+            setInbox((prevInbox) => [...prevInbox, ...newMessages]);
             setMessage("");
 
             socket.emit("message", newMessage);
         }
     };
 
-    const handleFileUpload = (event) => {
-        const selectedFile = event.target.files[0];
-        const fileName = event.target.files[0].name;
-        if (selectedFile) {
-            setExt(fileName.split(".").pop());
-            setFile(selectedFile);
-            setFilePreview(URL.createObjectURL(selectedFile));
-        }
-    };
 
     useEffect(() => {
         console.log("file extension --------->", ext);
@@ -239,15 +267,16 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 {msg.text && <p>{msg.text}</p>}
 
                                 {/* For image attachments */}
-                                {msg.attachment?.url && isImageFile(msg.attachment.url) && (
-                                    <div className="p-4">
-                                        <img
-                                            src={msg.attachment.url}
-                                            alt="attachment"
-                                            className="w-40 h-40"
-                                        />
-                                    </div>
-                                )}
+                                {msg.attachment?.url &&
+                                    isImageFile(msg.attachment.url) && (
+                                        <div className="p-4">
+                                            <img
+                                                src={msg.attachment.url}
+                                                alt="attachment"
+                                                className="w-40 h-40"
+                                            />
+                                        </div>
+                                    )}
 
 
                                 {/*/!* For file attachments *!/*/}
@@ -290,15 +319,15 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
 
             {/* For images preview before sending */}
             {filePreview && (
-                <div className="p-4">
-                    <img
-                        src={
-                            filePreview ||
-                            "https://0.academia-photos.com/attachment_thumbnails/58839319/mini_magick20190409-9685-cxv1d2.png?1554825434"
-                        }
-                        alt="preview"
-                        className="w-20 h-20 object-cover"
-                    />
+                <div className="p-4 flex">
+                    {filePreview.map((preview, index) => (
+                        <img
+                            key={index}
+                            src={preview}
+                            alt="preview"
+                            className="w-20 h-20 object-cover mr-4"
+                        />
+                    ))}
                 </div>
             )}
             <div className="chat-message clearfix">
@@ -323,7 +352,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                         <label htmlFor="file">
                             <MdAttachment className="text-3xl cursor-pointer"/>
                         </label>
-                        <input type="file" id="file" hidden onChange={handleFileUpload}/>
+                        <input type="file" id="file" multiple={true} hidden onChange={handleFileUpload}/>
                     </form>
                 </div>
             </div>
