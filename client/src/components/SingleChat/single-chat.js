@@ -3,8 +3,9 @@ import {getAllMessages} from "@/lib/actions/message";
 import {IoMdSend, IoMdDownload} from "react-icons/io";
 import {MdAttachment} from "react-icons/md";
 import {getChat} from "@/lib/actions/chat";
-import {FaFilePdf, FaFilePowerpoint} from "react-icons/fa";
+import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgArray} from "@/lib/actions/attachement";
+import PhotoGallery from "react-photo-gallery";
 
 export default function SingleChatPage({selectedUser, chat, socket}) {
     const [inbox, setInbox] = useState([]);
@@ -16,6 +17,38 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const [ext, setExt] = useState("");
 
     const loggedInUserId = localStorage.getItem("userId");
+
+    const fileTypes = [
+        {
+            extension: 'pdf',
+            icon: <FaFilePdf/>,
+            background: 'https://ja.nsommer.dk/img/pdf.jpg',
+            title: 'View PDF Attachment'
+        },
+        {
+            extension: 'ppt',
+            icon: <FaFilePowerpoint/>,
+            background: 'https://kayaconnect.org/pluginfile.php/383349/course/overviewfiles/powerpoint.png',
+            title: 'View PPT Attachment'
+        },
+        {
+            extension: 'doc',
+            icon: <FaFileWord/>,
+            background: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaaT53qepmWven1TGX8jrjQxnmwcm4ynllyQ&s',
+            title: 'View DOC Attachment'
+        },
+
+    ];
+
+    const style = {
+        width: 400,
+        height: 300,
+        backgroundSize: 'cover'
+    };
+    const config = {
+        viewedImageSize: 0.8,
+        backgroundOpacity: 0.6
+    };
 
     useEffect(() => {
         if (socket && chat && chat.id) {
@@ -32,7 +65,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                     setInbox((prevInbox) => [...prevInbox, message]);
                 } else if (
                     message &&
-                    message.attachmentUrl &&
+                    message.attachment.url &&
                     message.senderId !== loggedInUserId
                 ) {
                     console.log("attachment message-->", message);
@@ -69,12 +102,12 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 .filter((message) => !message.text)
                 .map((message) => message.id);
 
-            console.log("Idsss-->", msgIds);
+            // console.log("MsgIds-->", msgIds);
 
 
             // Fetch attachments
             const attachments = await getAllAttachmentsUsingMsgArray(msgIds);
-            console.log("attachments-->", attachments);
+            // console.log("attachments-->", attachments);
 
             // Fetch attachment URLs
             // const attachmentUrls = await getAllAttachmentsUsingMsgArray.url(msgIds)
@@ -89,7 +122,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 };
             });
 
-            console.log("All messages:", combinedMessages.length, combinedMessages);
+            console.log("All messages with attachments -->", combinedMessages.length, combinedMessages);
             setInbox(combinedMessages);
 
             // Scroll to the bottom when messages are loaded
@@ -111,26 +144,16 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         let attachmentUrl = null;
         if (file) {
             const fileReader = new FileReader();
-            console.log(fileReader);
-
             fileReader.onloadend = () => {
                 attachmentUrl = fileReader.result;
-                console.log("attachmentBaseUrl---->", attachmentUrl);
-
-                const jpegBase64String = attachmentUrl.replace(
-                    "data:application/pdf",
-                    "data:image/jpeg"
-                );
-                setFilePreviewUrl(jpegBase64String);
-
                 const newMessage = {
-                    filetype: file?.type,
+                    filetype: file.type,
                     senderId: loggedInUserId,
                     receiverId: selectedUser.id,
                     text: message,
                     createdAt: new Date().toISOString(),
                     chatId: chat.id,
-                    attachmentUrl,
+                    attachmentUrl
                 };
 
                 setInbox((prevInbox) => [...prevInbox, newMessage]);
@@ -139,11 +162,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 setFilePreview(null);
 
                 socket.emit("message", newMessage);
-
-                if (chatHistoryRef.current) {
-                    chatHistoryRef.current.scrollTop =
-                        chatHistoryRef.current.scrollHeight;
-                }
             };
             fileReader.readAsDataURL(file);
         } else {
@@ -160,10 +178,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
             setMessage("");
 
             socket.emit("message", newMessage);
-
-            if (chatHistoryRef.current) {
-                chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
-            }
         }
     };
 
@@ -178,7 +192,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     };
 
     useEffect(() => {
-        console.log("file extension--------->", ext);
+        console.log("file extension --------->", ext);
         console.log("inbox-->", inbox)
     }, [ext, inbox]);
 
@@ -191,6 +205,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         const strMinutes = minutes < 10 ? "0" + minutes : minutes;
         return `${hours}:${strMinutes} ${ampm}`;
     }
+
+    const isImageFile = (url) => {
+        return /\.(png|jpe?g|gif|bmp)$/i.test(url);
+    };
+
 
     return (
         <div className="chat h-screen flex flex-col">
@@ -231,47 +250,52 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 {/* For text */}
                                 {msg.text && <p>{msg.text}</p>}
 
-                                {/* For images*/}
-                                {msg.attachment && (
-                                    <div>
-                                        {
-                                            msg.attachment.url.endsWith('.jpg') && (
-                                                <div>
-                                                    <img className='w-32 h-32'
-                                                         src={msg.attachment.url}
-                                                         alt=''/>
-                                                </div>
-                                            )
-                                        }
+                                {/* For image attachments*/}
+
+                                {msg.attachment && isImageFile(msg.attachment.url) && (
+                                    <div className="p-4">
+                                        <img
+                                            src={msg.attachment.url}
+                                            alt="attachment"
+                                            className="w-40 h-40"
+                                        />
                                     </div>
                                 )}
 
-                                {/*/!* For attachments *!/*/}
-                                {msg.attachment && (
+                                {/*{msg?.attachment?.url?.endsWith('jpg' || 'jpeg' || 'png' || 'jfif') && (*/}
+                                {/*    <ImageViewer*/}
+                                {/*        style={style}*/}
+                                {/*        config={config}*/}
+                                {/*        image={msg?.attachment?.url}*/}
+                                {/*    />*/}
+                                {/*    // <img src={msg?.attachment?.url} alt="attachment" className="w-32 h-32"/>*/}
+                                {/*)}*/}
+
+                                {/*/!* For file attachments *!/*/}
+                                {msg.attachment?.url && (
                                     <div className="mt-2 w-64">
-                                        {
-                                            msg.attachment.url.endsWith('.pdf') && (
-                                                <div>
-                                                    <div
-                                                        className="w-full h-36 bg-cover bg-center"
-                                                        style={{
-                                                            backgroundImage: `url('https://ja.nsommer.dk/img/pdf.jpg')`,
-                                                        }}
-                                                    ></div>
-                                                    <div className="flex justify-between items-center px-3 py-2">
-                                                        <FaFilePdf className="text-xl"/>
-                                                        <h3 className="text-sm">View PDF Attachment</h3>
-                                                        <a
-                                                            href={msg.attachment.url}
-                                                            target="_blank"
-                                                            download
-                                                        >
-                                                            <IoMdDownload className="text-xl"/>
-                                                        </a>
-                                                    </div>
+                                        {fileTypes.find((fileType) => msg.attachment?.url?.endsWith(`.${fileType.extension}`)) && (
+                                            <div>
+                                                <div
+                                                    className="w-full h-36 bg-cover bg-center"
+                                                    style={{
+                                                        backgroundImage: `url(${fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).background})`,
+                                                    }}
+                                                ></div>
+                                                <div className="flex justify-between items-center px-3 py-2">
+                                                    {fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).icon}
+                                                    <h3 className="text-sm">
+                                                        {fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).title}</h3>
+                                                    <a
+                                                        href={msg.attachment.url}
+                                                        target="_blank"
+                                                        download
+                                                    >
+                                                        <IoMdDownload className="text-xl"/>
+                                                    </a>
                                                 </div>
-                                            )
-                                        }
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
