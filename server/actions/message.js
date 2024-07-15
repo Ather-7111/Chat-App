@@ -17,9 +17,24 @@ const bufferToDataURI = (buffer, filetype) => {
   return `data:${filetype};base64,${base64}`;
 };
 
+
+
+function getformat(fileType){
+  let object={
+    "image/png":"png",
+    "image/jpeg":"jpg",
+    "application/pdf":"pdf",
+    "video/mp4":"mp4",
+    "application/vnd.ms-powerpoint":"ppt",
+    "text/plain":"txt",
+    "application/vnd.openxmlformats":"docx"
+  };
+   return object[fileType];
+  
+}
 exports.createMessage = async function (messageCreate) {
   try {
-    console.log("hi", messageCreate);
+    // console.log("hi", messageCreate);
     const buffer = messageCreate.buffer;
     const filetype = messageCreate.filetype;
     const mime = messageCreate.mime;
@@ -35,32 +50,42 @@ exports.createMessage = async function (messageCreate) {
       },
     });
 
-    let resourceType;
-    let format;
-    switch (filetype) {
-      case "application/pdf":
-        resourceType = "auto";
-        format = "pdf";
-        break;
-      case "application/vnd.ms-powerpoint":
-        resourceType = "auto";
-        format = "ppt";
-        break;
-      // ... more cases
-      default:
-        resourceType = "auto";
-        format = "jpeg" || "png";
-    }
+    // let resourceType;
+    // let format;
+    // switch (filetype) {
+    //   // case "application/pdf":
+    //   //   resourceType = "auto";
+    //   //   format = "pdf";
+    //   //   break;
+    //   case "application/vnd.ms-powerpoint":
+    //     // resourceType = "auto";
+    //     format = "ppt";
+    //     break;
+    //   case "text/plain":
+    //     // resourceType = "auto";
+    //     format = "txt";
+    //     break;
+    //   // ... more cases
+    //   default:
+    //     resourceType = "auto";
+    //     format = null;
+    // }
+
+
+
+
+    
     // const dataURI = bufferToDataURI(buffer, filetype);
     if (mime) {
-      console.log("sigma", resourceType, filetype);
+      // console.log("sigma", resourceType, filetype);
 
       const uploadResult = await cloudinary.uploader.upload(mime, {
-        format:format,
-        resource_type:"raw"
+        format:getformat(filetype),
+        resource_type:"auto",
         
 
       });
+      
       console.log("sigma", uploadResult);
       const attachment = await prisma.attachment.create({
         data: {
