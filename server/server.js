@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
         } else {
             try {
                 console.log("message received into socket-->", message);
-                if (message?.filetype) {
+                if (message[0]?.filetype) {
                     message = message[0]
                 }
                 const savedMessage = await createMessage({

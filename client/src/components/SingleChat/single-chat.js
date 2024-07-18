@@ -279,38 +279,42 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 }`}
                             >
                                 {/* For text */}
-                                {msg.text && <p>{msg.text}</p>}
+                                {msg.text &&
+                                    <p>{msg.text}</p>}
 
                                 {/* For images attachments */}
                                 {
-                                    msg?.attachmentUrl
-                                        ? <div className="grid grid-cols-2">
+                                    (msg?.attachmentUrl || msg?.attachment) && (
+                                        <div>
                                             {
-                                                (
+                                                msg?.attachmentUrl ? (
                                                     <img
-                                                        src={msg.attachmentUrl}
+                                                        src={msg?.attachmentUrl?.startsWith(`data:${msg.filetype}`)
+                                                            ? msg.attachmentUrl : msg.attachment.url}
                                                         alt="attachment"
                                                         className="w-40 h-40"
                                                     />
-                                                )
-                                            } </div>
-                                        :
-                                        <div className="grid grid-cols-2">
-                                            {
-                                                (
-                                                    <img
-                                                        src={msg.attachment.url}
-                                                        alt="attachment"
-                                                        className="w-40 h-40"
-                                                    />
-                                                )
-                                            }
+                                                ) : <div className="grid grid-cols-2">
+                                                    {
+                                                        (
+                                                            <img
+                                                                src={msg?.attachment ? msg.attachment.url : null}
+                                                                alt="attachment"
+                                                                className="w-40 h-40"
+                                                            />
+                                                        )
+                                                    }
 
+                                                </div>
+                                            }
                                         </div>
+                                    )
                                 }
 
 
                                 {/*/!* For file attachments *!/*/}
+
+
                                 {msg?.attachment?.url && (
                                     <div className="mt-2 w-64">
                                         {fileTypes.find((fileType) => msg.attachment?.url?.endsWith(`.${fileType.extension}`)) && (
