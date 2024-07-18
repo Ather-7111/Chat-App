@@ -36,11 +36,11 @@ function getformat(fileType) {
 
 exports.createMessage = async function (messageCreate) {
     try {
-        // console.log("hi", messageCreate);
-        const buffer = messageCreate.buffer;
+        console.log("hi", messageCreate);
+        // const buffer = messageCreate.buffer;
         const filetype = messageCreate.filetype;
         const mime = messageCreate.mime;
-        delete messageCreate.buffer;
+        // delete messageCreate.buffer;
         delete messageCreate.filetype;
         delete messageCreate.mime;
         const message = await prisma.message.create({

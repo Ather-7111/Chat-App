@@ -32,6 +32,7 @@ export async function getAllMessages(userId, otherUserId, chatId) {
     //   from: msg.senderId,
     //   to: msg.receiverId,
     // })))
+    messages.forEach((e)=>{delete e.attachementUrl})
     return messages.map((msg) => ({
       ...msg,
       from: msg.senderId,

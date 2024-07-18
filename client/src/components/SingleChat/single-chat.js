@@ -152,6 +152,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                     const fileReader = new FileReader();
                     fileReader.onloadend = () => {
                         const attachmentUrl = fileReader.result;
+                        console.log("mimeAttachmentUrl", attachmentUrl);
                         const newMessage = {
                             filetype: file.type,
                             senderId: loggedInUserId,
@@ -169,6 +170,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
             };
 
             try {
+                const newMessages = [];
                 for (let i = 0; i < file.length; i++) {
                     const currentFile = file[i];
                     const newMessage = await readFile(currentFile);
@@ -180,35 +182,40 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 setFile(null);
                 setFilePreview(null);
 
-                console.log("new msgs", newMessages)
+                console.log("new msgs", newMessages);
                 socket.emit("message", newMessages);
-
 
             } catch (error) {
                 console.error("Error reading files:", error);
             }
         } else {
             const newMessage = {
-                filetype: "",
+                filetype: null,
                 senderId: loggedInUserId,
                 receiverId: selectedUser.id,
                 text: message,
                 createdAt: new Date().toISOString(),
                 chatId: chat.id,
+                attachmentUrl: null,
             };
 
-            newMessages = [newMessage];
-            setInbox((prevInbox) => [...prevInbox, ...newMessages]);
+            setInbox((prevInbox) => [...prevInbox, newMessage]);
             setMessage("");
+            setFile(null);
+            setFilePreview(null);
 
+            console.log("new msg", newMessage);
             socket.emit("message", newMessage);
         }
-    };
+
+
+    }
 
 
     useEffect(() => {
         console.log("file extension --------->", ext);
         console.log("inbox-->", inbox)
+        console.log("message->", message)
     }, [ext, inbox]);
 
     function formatDate(dateString) {
@@ -221,11 +228,19 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         return `${hours}:${strMinutes} ${ampm}`;
     }
 
-
-// Function to check if a file is an image
+    // Function to check if a file is an image
     const isImageFile = (url) => {
         return /\.(png|jpe?g|gif|bmp)$/i.test(url);
     };
+
+    // Extract image attachments for the gallery
+    // const imageAttachments = inbox
+    //     .filter((msg) => msg.attachment && isImageFile(msg.attachment.url))
+    //     .map((msg) => ({
+    //         src: msg.attachment.url,
+    //         width: 4,
+    //         height: 3,
+    //     }));
 
     return (
         <div className="chat h-screen flex flex-col">
@@ -257,7 +272,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             key={index}
                         >
                             <div
-                                className={`rounded border px-4 py-2 inline-block ${
+                                className={`rounded border p-2 inline-block ${
                                     msg.senderId === loggedInUserId
                                         ? "bg-blue-500 text-white"
                                         : "bg-gray-200"
@@ -266,21 +281,37 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 {/* For text */}
                                 {msg.text && <p>{msg.text}</p>}
 
-                                {/* For image attachments */}
-                                {msg.attachment?.url &&
-                                    isImageFile(msg.attachment.url) && (
-                                        <div className="p-4">
-                                            <img
-                                                src={msg.attachment.url}
-                                                alt="attachment"
-                                                className="w-40 h-40"
-                                            />
+                                {/* For images attachments */}
+                                {
+                                    msg?.attachmentUrl
+                                        ? <div className="grid grid-cols-2">
+                                            {
+                                                (
+                                                    <img
+                                                        src={msg.attachmentUrl}
+                                                        alt="attachment"
+                                                        className="w-40 h-40"
+                                                    />
+                                                )
+                                            } </div>
+                                        :
+                                        <div className="grid grid-cols-2">
+                                            {
+                                                (
+                                                    <img
+                                                        src={msg.attachment.url}
+                                                        alt="attachment"
+                                                        className="w-40 h-40"
+                                                    />
+                                                )
+                                            }
+
                                         </div>
-                                    )}
+                                }
 
 
                                 {/*/!* For file attachments *!/*/}
-                                {msg.attachment?.url && (
+                                {msg?.attachment?.url && (
                                     <div className="mt-2 w-64">
                                         {fileTypes.find((fileType) => msg.attachment?.url?.endsWith(`.${fileType.extension}`)) && (
                                             <div>
@@ -293,7 +324,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                 <div className="flex justify-between items-center px-3 py-2">
                                                     {fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).icon}
                                                     <h3 className="text-sm">
-                                                        {fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).title}</h3>
+                                                        {fileTypes.find((fileType) => msg.attachment.url.endsWith(`.${fileType.extension}`)).title}
+                                                    </h3>
                                                     <a
                                                         href={msg.attachment.url}
                                                         target="_blank"
@@ -315,6 +347,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                     ))}
 
                 </ul>
+
+
             </div>
 
             {/* For images preview before sending */}

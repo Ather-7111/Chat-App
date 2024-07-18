@@ -42,6 +42,9 @@ io.on("connection", (socket) => {
         } else {
             try {
                 console.log("message received into socket-->", message);
+                if (message?.filetype) {
+                    message = message[0]
+                }
                 const savedMessage = await createMessage({
                     text: message.text,
                     chatId: message.chatId,
@@ -51,6 +54,7 @@ io.on("connection", (socket) => {
                     filetype: message.filetype,
                     mime: message.attachmentUrl,
                 });
+                console.log("saved Message", savedMessage)
 
                 const notification = await createNotification({
                     chatId: message.chatId,
