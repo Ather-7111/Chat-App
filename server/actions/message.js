@@ -26,6 +26,7 @@ function getformat(fileType) {
         "application/vnd.ms-powerpoint": "ppt",
         "text/plain": "txt",
         "application/vnd.openxmlformats": "docx",
+        "application/msword":"doc",
         "application/vnd.ms-excel": "xls",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
         "application/x-zip-compressed": "zip",
