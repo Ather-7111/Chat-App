@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("message", async (message) => {
-        // console.log("multiple message hijra", message)
+        console.log("multiple message hijra", message)
         if (message.length > 1) {
             console.log("multiple message", message)
             const multipleAttachmentMsg = await createMultipleMessages(message)

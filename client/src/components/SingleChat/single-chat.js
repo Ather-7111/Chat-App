@@ -5,7 +5,6 @@ import {MdAttachment} from "react-icons/md";
 import {getChat} from "@/lib/actions/chat";
 import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgArray} from "@/lib/actions/attachement";
-import Gallery from "react-photo-gallery";
 
 export default function SingleChatPage({selectedUser, chat, socket}) {
     const [inbox, setInbox] = useState([]);
@@ -15,7 +14,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const chatHistoryRef = useRef(null);
     const [filePreviewUrl, setFilePreviewUrl] = useState("");
     const [ext, setExt] = useState("");
-    const [fileT, setFileT] = useState("");
 
     const loggedInUserId = localStorage.getItem("userId");
 
@@ -185,8 +183,9 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 try {
                     const newMessage = await readFile(currentFile);
                     newMessages.push(newMessage);
+
                     setInbox((prevInbox) => [...prevInbox, newMessage]); // Update inbox state with new message
-                    socket.emit("message", newMessage);
+                    socket.emit("message", newMessages);
                 } catch (error) {
                     console.error("Error reading file:", error);
                 }
@@ -234,14 +233,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         return /\.(png|jpe?g|gif|bmp)$/i.test(url);
     };
 
-    // Extract image attachments for the gallery
-    // const imageAttachments = inbox
-    //     .filter((message) => message.attachment && isImageFile(message.attachment.url))
-    //     .map((message) => ({
-    //         src: message.attachment.url,
-    //         width: 4,
-    //         height: 3,
-    //     }));
+
 
     return (
         <div className="chat h-screen flex flex-col">
@@ -295,20 +287,21 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                     {message.text && (
                                         <div className={bubbleClass}>
                                             <div className="message-data">
-                        <span className="message-data-time">
-                          {formatDate(message.createdAt)}
-                        </span>
+                                                <span className="message-data-time">
+                                                 {formatDate(message.createdAt)}
+                                                </span>
                                             </div>
                                             {message.text}
                                         </div>
                                     )}
+
                                     {/* For images attachments */}
                                     {(message?.attachment || message?.attachmentUrl) && (
                                         <div className="attachment">
                                             {isImageFile(
                                                 message?.attachment?.url || message?.attachmentUrl
                                             ) ? (
-                                                <div className="image-preview mt-2">
+                                                <div className="image-preview mt-2 cursor-pointer">
                                                     <img
                                                         src={
                                                             message?.attachmentUrl?.startsWith(
@@ -341,232 +334,65 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
 
                                     {/*/!* For file attachments *!/*/}
 
-                                    {message?.attachment?.url || message?.attachmentUrl ? (
-                                        <div className="attachment-info flex flex-col mt-2">
-                                            {fileTypes.map((fileType) => {
-                                                const isSender = message.senderId === loggedInUserId;
+                                    {(message?.attachment?.url || message?.attachmentUrl)
+                                        // && (!isImageFile(message?.attachment?.url || message?.attachmentUrl) )
+                                        ? (
+                                            <div className="attachment-info flex flex-col mt-2">
+                                                {fileTypes.map((fileType) => {
+                                                    const isSender = message.senderId === loggedInUserId;
 
-                                                const attachmentUrl = isSender
-                                                    ? message?.attachment?.url || message?.attachmentUrl
-                                                    : message?.attachment?.url;
+                                                    const attachmentUrl = isSender
+                                                        ? message?.attachment?.url || message?.attachmentUrl
+                                                        : message?.attachment?.url;
 
-                                                console.log("attachment URL -->", attachmentUrl)
+                                                    console.log("attachment URL -->", attachmentUrl)
 
-                                                const isMatchingType =
-                                                    attachmentUrl?.endsWith(`.${fileType.extension}`) ||
-                                                    attachmentUrl?.startsWith(
-                                                        `data:${fileType.filetype}`
-                                                    );
+                                                    const isMatchingType =
+                                                        attachmentUrl?.endsWith(`.${fileType.extension}`) ||
+                                                        attachmentUrl?.startsWith(
+                                                            `data:${fileType.filetype}`
+                                                        );
 
-                                                if (isMatchingType) {
-                                                    const {background, extension, title, icon} =
-                                                        fileType;
+                                                    if (isMatchingType) {
+                                                        const {background, extension, title, icon} =
+                                                            fileType;
 
-                                                    return (
-                                                        <div key={extension} className="flex flex-col">
-                                                            <div
-                                                                className="attachment-thumbnail"
-                                                                style={{
-                                                                    backgroundImage: `url(${background})`,
-                                                                    backgroundSize: "cover",
-                                                                    width: "350px",
-                                                                    height: "200px",
-                                                                    borderRadius: "8px",
-                                                                    backgroundColor: "#f8f9fa",
-                                                                }}
-                                                            ></div>
-                                                            <div
-                                                                className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
-                                                                <div>{icon}</div>
-                                                                <p
-                                                                    className="text-black hover:underline mt-2"
-                                                                >
-                                                                    {title || "View File"}
-                                                                </p>
-                                                                <a
-                                                                    href={message?.attachmentUrl ? message?.attachmentUrl : message?.attachment?.url}
-                                                                    target="_blank"
-                                                                    download
-                                                                    className="flex items-center text-black hover:underline mt-1"
-                                                                >
-                                                                    <IoMdDownload className="mr-1"/>
-                                                                </a>
+                                                        return (
+                                                            <div key={extension} className="flex flex-col">
+                                                                <div
+                                                                    className="attachment-thumbnail"
+                                                                    style={{
+                                                                        backgroundImage: `url(${background})`,
+                                                                        backgroundSize: "cover",
+                                                                        width: "350px",
+                                                                        height: "200px",
+                                                                        borderRadius: "8px",
+                                                                        backgroundColor: "#f8f9fa",
+                                                                    }}
+                                                                ></div>
+                                                                <div
+                                                                    className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
+                                                                    <div>{icon}</div>
+                                                                    <p className="text-black hover:underline mt-2">{title || "View File"}
+                                                                    </p>
+                                                                    <a
+                                                                        href={message?.attachmentUrl ? message?.attachmentUrl : message?.attachment?.url}
+                                                                        target="_blank"
+                                                                        download
+                                                                        className="flex items-center text-black hover:underline mt-1"
+                                                                    >
+                                                                        <IoMdDownload className="mr-1"/>
+                                                                    </a>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                        </div>
-                                    ) : null}
+                                                        );
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+                                        ) : null}
 
-                                    {/* {(message?.attachment?.url || message?.attachmentUrl) && (
-                    <div>
-                      {message?.attachmentUrl ? (
-                        // sender node
-                        <div>
-                          {fileTypes.find((fileType) =>
-                            message?.attachmentUrl.startsWith(
-                              `data:${message.filetype}`
-                            )
-                          ) && (
-                            <div>
-                              <div
-                                className="w-full h-36 bg-cover bg-center"
-                                style={{
-                                  backgroundImage: `url(${
-                                    fileTypes.find((fileType) =>
-                                      message?.attachmentUrl.startsWith(
-                                        `data:${fileType.filetype}`
-                                      )
-                                    ).background
-                                  })`,
-                                }}
-                              ></div>
-                              <div className="flex justify-between items-center px-3 py-2">
-                                {
-                                  fileTypes.find((fileType) =>
-                                    message?.attachmentUrl.startsWith(
-                                      `data:${fileType.filetype}`
-                                    )
-                                  ).icon
-                                }
-                                <h3 className="text-sm">
-                                  {
-                                    fileTypes.find((fileType) =>
-                                      message?.attachmentUrl.startsWith(
-                                        `data:${fileType.filetype}`
-                                      )
-                                    ).title
-                                  }
-                                </h3>
-                                <a
-                                  href={
-                                    message?.attachmentUrl
-                                      ? message?.attachmentUrl
-                                      : message.attachment.url
-                                  }
-                                  target="_blank"
-                                  download
-                                >
-                                  <IoMdDownload className="text-xl" />
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        // receiver node
-                        <div>
-                          {fileTypes.find((fileType) =>
-                            message.attachment?.url?.endsWith(
-                              `.${fileType.extension}`
-                            )
-                          ) && (
-                            <div>
-                              <div
-                                className="w-full h-36 bg-cover bg-center"
-                                style={{
-                                  backgroundImage: `url(${
-                                    fileTypes.find((fileType) =>
-                                      message.attachment.url.endsWith(
-                                        `.${fileType.extension}`
-                                      )
-                                    ).background
-                                  })`,
-                                }}
-                              ></div>
-                              <div className="flex justify-between items-center px-3 py-2">
-                                {
-                                  fileTypes.find((fileType) =>
-                                    message.attachment.url.endsWith(
-                                      `.${fileType.extension}`
-                                    )
-                                  ).icon
-                                }
-                                <h3 className="text-sm">
-                                  {
-                                    fileTypes.find((fileType) =>
-                                      message.attachment.url.endsWith(
-                                        `.${fileType.extension}`
-                                      )
-                                    ).title
-                                  }
-                                </h3>
-                                <a
-                                  href={message.attachment.url}
-                                  target="_blank"
-                                  download
-                                >
-                                  <IoMdDownload className="text-xl" />
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )} */}
-                                    {/* {(message?.attachment?.url || message?.attachmentUrl) && (
-                    <div className="mt-2 w-64">
-                      {(fileTypes.find((fileType) =>
-                        message.attachment?.url?.endsWith(`.${fileType.extension}`)
-                      ) ||
-                        fileTypes.find((fileType) =>
-                          message.attachmentUrl?.startsWith(
-                            `data:${fileType.filetype}`
-                          )
-                        )) && (
-                        <div>
-                          <div
-                            className="w-full h-36 bg-cover bg-center"
-                            style={{
-                              backgroundImage:
-                                `url(${
-                                  fileTypes.find((fileType) =>
-                                    message.attachment?.url.endsWith(
-                                      `.${fileType.extension}`
-                                    )    
-                                  )?.background
-                                })` ||
-                                `url(${
-                                  fileTypes.find((fileType) =>
-                                    message.attachmentUrl?.startsWith(
-                                      `data:${fileType.filetype}`
-                                    )
-                                  )?.background
-                                })`,
-                            }}
-                          ></div>
-                          <div className="flex justify-between items-center px-3 py-2">
-                            {
-                              fileTypes.find((fileType) =>
-                                message.attachment.url.endsWith(
-                                  `.${fileType.extension}`
-                                )
-                              ).icon
-                            }
-                            <h3 className="text-sm">
-                              {
-                                fileTypes.find((fileType) =>
-                                  message.attachment.url.endsWith(
-                                    `.${fileType.extension}`
-                                  )
-                                ).title
-                              }
-                            </h3>
-                            <a
-                              href={message.attachment.url}
-                              target="_blank"
-                              download
-                            >
-                              <IoMdDownload className="text-xl" />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )} */}
+
                                     <small className="flex justify-end mt-3">
                                         {formatDate(message.createdAt)}
                                     </small>

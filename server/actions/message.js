@@ -37,13 +37,13 @@ function getformat(fileType) {
 
 exports.createMessage = async function (messageCreate) {
     try {
-        console.log("hi", messageCreate);
+        // console.log("hi", messageCreate);
         // const buffer = messageCreate.buffer;
         const filetype = messageCreate.filetype;
-        const mime = messageCreate.mime;
+        const mime = messageCreate.attachmentUrl;
         // delete messageCreate.buffer;
         delete messageCreate.filetype;
-        delete messageCreate.mime;
+        delete messageCreate.attachmentUrl;
         const message = await prisma.message.create({
             data: messageCreate,
             include: {
@@ -83,7 +83,7 @@ exports.createMessage = async function (messageCreate) {
                 resource_type: "auto",
             });
 
-            console.log("sigma", uploadResult);
+            // console.log("sigma", uploadResult);
             const attachment = await prisma.attachment.create({
                 data: {
                     url: uploadResult.secure_url,
@@ -118,23 +118,39 @@ exports.createMessage = async function (messageCreate) {
 exports.createMultipleMessages = async function (messageCreate) {
     try {
         let returnedMessages = []
-        // console.log("hi", messageCreate);
+        console.log("hi", messageCreate);
+        // const filetype = messageCreate[0].filetype;
+        // const mime = messageCreate[0].attachmentUrl;
+        // delete messageCreate[i].buffer;
+        // delete messageCreate[0].filetype;
+        // delete messageCreate[0].attachmentUrl;
+        const message = await prisma.message.create({
+            data: {chatId:messageCreate[0].chatId,senderId:messageCreate[0].senderId,receiverId:messageCreate[0].receiverId,text:messageCreate[0].text},
+            include: {
+                sender: true,
+                conversation: true,
+                receiver: true,
+            },
+        });
+
         for (let i in messageCreate) {
             // const buffer = messageCreate[i].buffer;
 
             const filetype = messageCreate[i].filetype;
             const mime = messageCreate[i].attachmentUrl;
             // delete messageCreate[i].buffer;
-            delete messageCreate[i].filetype;
-            delete messageCreate[i].attachmentUrl;
-            const message = await prisma.message.create({
-                data: messageCreate[i],
-                include: {
-                    sender: true,
-                    conversation: true,
-                    receiver: true,
-                },
-            });
+            // delete messageCreate[i].filetype;
+            // delete messageCreate[i].attachmentUrl;
+
+
+            // const message = await prisma.message.create({
+            //     data: messageCreate[i],
+            //     include: {
+            //         sender: true,
+            //         conversation: true,
+            //         receiver: true,
+            //     },
+            // });
 
 
             // let resourceType;
@@ -160,14 +176,14 @@ exports.createMultipleMessages = async function (messageCreate) {
 
             // const dataURI = bufferToDataURI(buffer, filetype);
             // if (mime) {
-            // console.log("sigma", resourceType, filetype);
+            console.log("sigma-hijra", filetype,mime);
 
             const uploadResult = await cloudinary.uploader.upload(mime, {
                 format: getformat(filetype),
                 resource_type: "auto",
             });
 
-            console.log("sigma", uploadResult);
+            // console.log("sigma", uploadResult);
             const attachment = await prisma.attachment.create({
                 data: {
                     url: uploadResult.secure_url,
