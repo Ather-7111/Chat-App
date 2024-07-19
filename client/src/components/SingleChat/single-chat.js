@@ -54,19 +54,23 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
       socket.on("message", (message) => {
         console.log("Message from socket:", message);
 
-        // Add incoming message to inbox, but only if it's from another user
+        // Add incoming message to inbox
         if (message && message.text && message.senderId !== loggedInUserId) {
           console.log("message-->", message);
           setInbox((prevInbox) => [...prevInbox, message]);
         } else if (
           message &&
-          message.attachment.url &&
-          message.senderId !== loggedInUserId
+          (message.attachment?.url || message.attachmentUrl)
         ) {
           console.log("attachment message-->", message);
           setInbox((prevInbox) => [...prevInbox, message]);
         }
       });
+
+      // Add the sender's message to the inbox immediately
+      if (chat.currentMessage) {
+        setInbox((prevInbox) => [...prevInbox, chat.currentMessage]);
+      }
 
       loadMessages();
 
@@ -93,14 +97,14 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
       );
 
       // Extract message IDs for attachment messages
-      const msgIds = allMessages
+      const messageIds = allMessages
         .filter((message) => !message.text)
         .map((message) => message.id);
 
-      // console.log("MsgIds-->", msgIds);
+      // console.log("MsgIds-->", messageIds);
 
       // Fetch attachments
-      const attachments = await getAllAttachmentsUsingMsgArray(msgIds);
+      const attachments = await getAllAttachmentsUsingMsgArray(messageIds);
       // console.log("attachments-->", attachments);
 
       // Combine messages and attachments
@@ -145,55 +149,49 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
-    console.log(event);
 
     if (!message.trim() && (!file || file.length === 0)) {
       return;
     }
 
-    let newMessages = [];
+    const newMessages = [];
 
     if (file && file.length > 0) {
-      const readFile = (file) => {
-        return new Promise((resolve, reject) => {
-          const fileReader = new FileReader();
-          fileReader.onloadend = () => {
-            const attachmentUrl = fileReader.result;
-            console.log("mimeAttachmentUrl", attachmentUrl);
-            const newMessage = {
-              filetype: file.type,
-              senderId: loggedInUserId,
-              receiverId: selectedUser.id,
-              text: message,
-              createdAt: new Date().toISOString(),
-              chatId: chat.id,
-              attachmentUrl,
+      for (let i = 0; i < file.length; i++) {
+        const currentFile = file[i];
+        const readFile = (file) => {
+          return new Promise((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.onloadend = () => {
+              const attachmentUrl = fileReader.result;
+              const newMessage = {
+                filetype: file.type,
+                senderId: loggedInUserId,
+                receiverId: selectedUser.id,
+                text: message,
+                createdAt: new Date().toISOString(),
+                chatId: chat.id,
+                attachmentUrl,
+              };
+              resolve(newMessage);
             };
-            resolve(newMessage);
-          };
-          fileReader.onerror = reject;
-          fileReader.readAsDataURL(file);
-        });
-      };
+            fileReader.onerror = reject;
+            fileReader.readAsDataURL(file);
+          });
+        };
 
-      try {
-        const newMessages = [];
-        for (let i = 0; i < file.length; i++) {
-          const currentFile = file[i];
+        try {
           const newMessage = await readFile(currentFile);
           newMessages.push(newMessage);
+          setInbox((prevInbox) => [...prevInbox, newMessage]); // Update inbox state with new message
+          socket.emit("message", newMessage);
+        } catch (error) {
+          console.error("Error reading file:", error);
         }
-
-        setInbox((prevInbox) => [...prevInbox, ...newMessages]);
-        setMessage("");
-        setFile(null);
-        setFilePreview(null);
-
-        console.log("new msgs", newMessages);
-        socket.emit("message", newMessages);
-      } catch (error) {
-        console.error("Error reading files:", error);
       }
+      setMessage("");
+      setFile(null);
+      setFilePreview(null);
     } else {
       const newMessage = {
         filetype: null,
@@ -209,8 +207,6 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
       setMessage("");
       setFile(null);
       setFilePreview(null);
-
-      console.log("new msg", newMessage);
       socket.emit("message", newMessage);
     }
   };
@@ -238,9 +234,9 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
 
   // Extract image attachments for the gallery
   // const imageAttachments = inbox
-  //     .filter((msg) => msg.attachment && isImageFile(msg.attachment.url))
-  //     .map((msg) => ({
-  //         src: msg.attachment.url,
+  //     .filter((message) => message.attachment && isImageFile(message.attachment.url))
+  //     .map((message) => ({
+  //         src: message.attachment.url,
   //         width: 4,
   //         height: 3,
   //     }));
@@ -256,176 +252,266 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                 alt="avatar"
               />
             </a>
+
             <div className="chat-about">
               <h6 className="m-b-0">{selectedUser.name}</h6>
             </div>
           </div>
         </div>
       </div>
+
       <div
         className="chat-history flex-grow flex flex-col-reverse overflow-y-auto p-4"
         ref={chatHistoryRef}
       >
         <ul className="m-b-0">
-          {inbox.map((msg, index) => (
-            <li
-              className={`clearfix list-none ${
-                msg.senderId === loggedInUserId ? "flex justify-end" : ""
-              }`}
-              key={index}
-            >
-              <div
-                className={`rounded border p-2 inline-block ${
-                  msg.senderId === loggedInUserId
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {/* For text */}
-                {msg.text && <p>{msg.text}</p>}
+          {inbox.map((message, index) => {
+            const isSentByCurrentUser = message.senderId === loggedInUserId;
 
-                {/* For images attachments */}
-                {(msg?.attachmentUrl || msg?.attachment) && (
-                  <div>
-                    {msg?.attachmentUrl ? (
-                      <img
-                        src={
-                          msg?.attachmentUrl?.startsWith(`data:${msg.filetype}`)
-                            ? msg.attachmentUrl
-                            : msg.attachment.url
-                        }
-                        alt="attachment"
-                        className="w-40 h-40"
-                      />
-                    ) : (
-                      <div className="grid grid-cols-2">
-                        {
+            const containerClass = isSentByCurrentUser
+              ? "flex justify-end mb-2"
+              : "flex justify-start mb-2";
+            const bubbleClass = isSentByCurrentUser
+              ? "bg-blue-500 text-white rounded-lg p-2"
+              : "bg-gray-300 text-gray-900 rounded-lg p-2";
+
+            const messageClass = isSentByCurrentUser
+              ? "flex flex-col items-end"
+              : "flex flex-col items-start";
+
+            const fileType = message.attachment
+              ? message.attachment.url.split(".").pop()
+              : "";
+            const fileTypeInfo = fileTypes.find(
+              (type) => type.extension === fileType
+            );
+
+            return (
+              <li className={containerClass} key={index}>
+                <div className={messageClass}>
+                  {/* For text */}
+                  {message.text && (
+                    <div className={bubbleClass}>
+                      <div className="message-data">
+                        <span className="message-data-time">
+                          {formatDate(message.createdAt)}
+                        </span>
+                      </div>
+                      {message.text}
+                    </div>
+                  )}
+                  {/* For images attachments */}
+                  {(message?.attachment || message?.attachmentUrl) && (
+                    <div className="attachment">
+                      {isImageFile(
+                        message?.attachment?.url || message?.attachmentUrl
+                      ) ? (
+                        <div className="image-preview mt-2">
                           <img
-                            src={msg?.attachment ? msg.attachment.url : null}
+                            src={
+                              message?.attachmentUrl?.startsWith(
+                                `data:${message.filetype}`
+                              )
+                                ? message.attachmentUrl
+                                : message?.attachment?.url ||
+                                  message?.attachmentUrl
+                            }
                             alt="attachment"
-                            className="w-40 h-40"
+                            className="max-w-xs rounded-lg"
                           />
+                        </div>
+                      ) : (
+                        <div>
+                          <img
+                            src={
+                              message?.attachment?.url
+                                ? message?.attachment?.url ||
+                                  message?.attachmentUrl
+                                : message?.attachmentUrl
+                            }
+                            alt="attachment"
+                            className="max-w-xs rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/*/!* For file attachments *!/*/}
+
+                  {message.attachment || message.attachmentUrl ? (
+                    <div className="attachment-info flex flex-col mt-2">
+                      {fileTypes.map((fileType) => {
+                        const isSender = message.senderId === loggedInUserId;
+
+                        const attachmentUrl = isSender
+                          ? message?.attachmentUrl
+                          : message?.attachment?.url;
+
+                        const isMatchingType =
+                          attachmentUrl?.endsWith(`.${fileType.extension}`) ||
+                          attachmentUrl?.startsWith(
+                            `data:${fileType.filetype}`
+                          );
+
+                        if (isMatchingType) {
+                          const { background, extension, title, icon } =
+                            fileType;
+
+                          return (
+                            <div key={extension} className="flex flex-col">
+                              <div
+                                className="attachment-thumbnail"
+                                style={{
+                                  backgroundImage: `url(${background})`,
+                                  backgroundSize: "cover",
+                                  width: "350px",
+                                  height: "200px",
+                                  borderRadius: "8px",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                              ></div>
+                              <div className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
+                                <div>{icon}</div>
+                                <a
+                                  href={attachmentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-black hover:underline mt-2"
+                                >
+                                  {title || "View File"}
+                                </a>
+                                <a
+                                  href={attachmentUrl}
+                                  target="_blank"
+                                  download
+                                  className="flex items-center text-black hover:underline mt-1"
+                                >
+                                  <IoMdDownload className="mr-1" />
+                                </a>
+                              </div>
+                            </div>
+                          );
                         }
-                      </div>
-                    )}
-                  </div>
-                )}
+                        return null;
+                      })}
+                    </div>
+                  ) : null}
 
-                {/*/!* For file attachments *!/*/}
-
-                {(msg?.attachment?.url || msg?.attachmentUrl) && (
-                  <div>
-                    {msg?.attachmentUrl ? (
-                      // sender node
-                      <div>
-                        {fileTypes.find((fileType) =>
-                          msg?.attachmentUrl.startsWith(`data:${msg.filetype}`)
-                        ) && (
-                          <div>
-                            <div
-                              className="w-full h-36 bg-cover bg-center"
-                              style={{
-                                backgroundImage: `url(${
-                                  fileTypes.find((fileType) =>
-                                    msg?.attachmentUrl.startsWith(
-                                      `data:${msg.filetype}`
-                                    )
-                                  ).background
-                                })`,
-                              }}
-                            ></div>
-                            <div className="flex justify-between items-center px-3 py-2">
-                              {
-                                fileTypes.find((fileType) =>
-                                  msg?.attachmentUrl.startsWith(
-                                    `data:${msg.filetype}`
-                                  )
-                                ).icon
-                              }
-                              <h3 className="text-sm">
+                  {/* {(message?.attachment?.url || message?.attachmentUrl) && (
+                    <div>
+                      {message?.attachmentUrl ? (
+                        // sender node
+                        <div>
+                          {fileTypes.find((fileType) =>
+                            message?.attachmentUrl.startsWith(
+                              `data:${message.filetype}`
+                            )
+                          ) && (
+                            <div>
+                              <div
+                                className="w-full h-36 bg-cover bg-center"
+                                style={{
+                                  backgroundImage: `url(${
+                                    fileTypes.find((fileType) =>
+                                      message?.attachmentUrl.startsWith(
+                                        `data:${fileType.filetype}`
+                                      )
+                                    ).background
+                                  })`,
+                                }}
+                              ></div>
+                              <div className="flex justify-between items-center px-3 py-2">
                                 {
                                   fileTypes.find((fileType) =>
-                                    msg?.attachmentUrl.startsWith(
-                                      `data:${msg.filetype}`
+                                    message?.attachmentUrl.startsWith(
+                                      `data:${fileType.filetype}`
                                     )
-                                  ).title
+                                  ).icon
                                 }
-                              </h3>
-                              <a
-                                href={
-                                  msg?.attachmentUrl
-                                    ? msg?.attachmentUrl
-                                    : msg.attachment.url
-                                }
-                                target="_blank"
-                                download
-                              >
-                                <IoMdDownload className="text-xl" />
-                              </a>
+                                <h3 className="text-sm">
+                                  {
+                                    fileTypes.find((fileType) =>
+                                      message?.attachmentUrl.startsWith(
+                                        `data:${fileType.filetype}`
+                                      )
+                                    ).title
+                                  }
+                                </h3>
+                                <a
+                                  href={
+                                    message?.attachmentUrl
+                                      ? message?.attachmentUrl
+                                      : message.attachment.url
+                                  }
+                                  target="_blank"
+                                  download
+                                >
+                                  <IoMdDownload className="text-xl" />
+                                </a>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      // receiver node
-                      <div>
-                        {fileTypes.find((fileType) =>
-                          msg.attachment?.url?.endsWith(
-                            `.${fileType.extension}`
-                          )
-                        ) && (
-                          <div>
-                            <div
-                              className="w-full h-36 bg-cover bg-center"
-                              style={{
-                                backgroundImage: `url(${
-                                  fileTypes.find((fileType) =>
-                                    msg.attachment.url.endsWith(
-                                      `.${fileType.extension}`
-                                    )
-                                  ).background
-                                })`,
-                              }}
-                            ></div>
-                            <div className="flex justify-between items-center px-3 py-2">
-                              {
-                                fileTypes.find((fileType) =>
-                                  msg.attachment.url.endsWith(
-                                    `.${fileType.extension}`
-                                  )
-                                ).icon
-                              }
-                              <h3 className="text-sm">
+                          )}
+                        </div>
+                      ) : (
+                        // receiver node
+                        <div>
+                          {fileTypes.find((fileType) =>
+                            message.attachment?.url?.endsWith(
+                              `.${fileType.extension}`
+                            )
+                          ) && (
+                            <div>
+                              <div
+                                className="w-full h-36 bg-cover bg-center"
+                                style={{
+                                  backgroundImage: `url(${
+                                    fileTypes.find((fileType) =>
+                                      message.attachment.url.endsWith(
+                                        `.${fileType.extension}`
+                                      )
+                                    ).background
+                                  })`,
+                                }}
+                              ></div>
+                              <div className="flex justify-between items-center px-3 py-2">
                                 {
                                   fileTypes.find((fileType) =>
-                                    msg.attachment.url.endsWith(
+                                    message.attachment.url.endsWith(
                                       `.${fileType.extension}`
                                     )
-                                  ).title
+                                  ).icon
                                 }
-                              </h3>
-                              <a
-                                href={msg.attachment.url}
-                                target="_blank"
-                                download
-                              >
-                                <IoMdDownload className="text-xl" />
-                              </a>
+                                <h3 className="text-sm">
+                                  {
+                                    fileTypes.find((fileType) =>
+                                      message.attachment.url.endsWith(
+                                        `.${fileType.extension}`
+                                      )
+                                    ).title
+                                  }
+                                </h3>
+                                <a
+                                  href={message.attachment.url}
+                                  target="_blank"
+                                  download
+                                >
+                                  <IoMdDownload className="text-xl" />
+                                </a>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* {(msg?.attachment?.url || msg?.attachmentUrl) && (
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )} */}
+                  {/* {(message?.attachment?.url || message?.attachmentUrl) && (
                     <div className="mt-2 w-64">
                       {(fileTypes.find((fileType) =>
-                        msg.attachment?.url?.endsWith(`.${fileType.extension}`)
+                        message.attachment?.url?.endsWith(`.${fileType.extension}`)
                       ) ||
                         fileTypes.find((fileType) =>
-                          msg.attachmentUrl?.startsWith(
+                          message.attachmentUrl?.startsWith(
                             `data:${fileType.filetype}`
                           )
                         )) && (
@@ -436,14 +522,14 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                               backgroundImage:
                                 `url(${
                                   fileTypes.find((fileType) =>
-                                    msg.attachment?.url.endsWith(
+                                    message.attachment?.url.endsWith(
                                       `.${fileType.extension}`
                                     )    
                                   )?.background
                                 })` ||
                                 `url(${
                                   fileTypes.find((fileType) =>
-                                    msg.attachmentUrl?.startsWith(
+                                    message.attachmentUrl?.startsWith(
                                       `data:${fileType.filetype}`
                                     )
                                   )?.background
@@ -453,7 +539,7 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                           <div className="flex justify-between items-center px-3 py-2">
                             {
                               fileTypes.find((fileType) =>
-                                msg.attachment.url.endsWith(
+                                message.attachment.url.endsWith(
                                   `.${fileType.extension}`
                                 )
                               ).icon
@@ -461,14 +547,14 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                             <h3 className="text-sm">
                               {
                                 fileTypes.find((fileType) =>
-                                  msg.attachment.url.endsWith(
+                                  message.attachment.url.endsWith(
                                     `.${fileType.extension}`
                                   )
                                 ).title
                               }
                             </h3>
                             <a
-                              href={msg.attachment.url}
+                              href={message.attachment.url}
                               target="_blank"
                               download
                             >
@@ -479,13 +565,13 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                       )}
                     </div>
                   )} */}
-
-                <small className="flex justify-end mt-3">
-                  {formatDate(msg.createdAt)}
-                </small>
-              </div>
-            </li>
-          ))}
+                  <small className="flex justify-end mt-3">
+                    {formatDate(message.createdAt)}
+                  </small>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
