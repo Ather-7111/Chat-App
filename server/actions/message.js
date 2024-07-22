@@ -37,13 +37,13 @@ function getformat(fileType) {
 
 exports.createMessage = async function (messageCreate) {
     try {
-        // console.log("hi", messageCreate);
+        console.log("hi-single", messageCreate);
         // const buffer = messageCreate.buffer;
         const filetype = messageCreate.filetype;
-        const mime = messageCreate.attachmentUrl;
+        const mime = messageCreate.mimd;
         // delete messageCreate.buffer;
         delete messageCreate.filetype;
-        delete messageCreate.attachmentUrl;
+        delete messageCreate.mime;
         const message = await prisma.message.create({
             data: messageCreate,
             include: {
@@ -118,7 +118,7 @@ exports.createMessage = async function (messageCreate) {
 exports.createMultipleMessages = async function (messageCreate) {
     try {
         let returnedMessages = []
-        console.log("hi", messageCreate);
+        console.log("hi-multiple", messageCreate);
         // const filetype = messageCreate[0].filetype;
         // const mime = messageCreate[0].attachmentUrl;
         // delete messageCreate[i].buffer;
@@ -183,7 +183,7 @@ exports.createMultipleMessages = async function (messageCreate) {
                 resource_type: "auto",
             });
 
-            // console.log("sigma", uploadResult);
+            console.log("sigma", uploadResult);
             const attachment = await prisma.attachment.create({
                 data: {
                     url: uploadResult.secure_url,
