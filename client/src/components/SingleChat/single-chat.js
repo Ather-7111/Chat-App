@@ -7,6 +7,9 @@ import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgIds} from "@/lib/actions/attachement";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import ImageModal from "@/components/ImageModal/imageModal";
+import ImageGallery from "react-image-gallery";
+import "react-image-gallery/styles/css/image-gallery.css";
 
 export default function SingleChatPage({selectedUser, chat, socket}) {
     const [inbox, setInbox] = useState([]);
@@ -18,7 +21,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const [ext, setExt] = useState("");
     const [url, setUrl] = useState('')
     const [lightboxOpen, setLightboxOpen] = useState(false);
-    const [activeImage, setActiveImage] = useState(0);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [messageId, setMessageId] = useState('')
+    const [gridImages, setGridImages] = useState([])
+    const [selectedImages, setSelectedImages] = useState([])
+
 
     const loggedInUserId = localStorage.getItem("userId");
 
@@ -252,10 +259,10 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         console.log("inbox-->", inbox);
         // console.log("message->", message);
         console.log("url", url)
+        console.log("selectedImage", selectedImage)
+        console.log("selectedImages", selectedImages)
 
-        console.log("activeImage", activeImage)
-        console.log("lightboxOpen", lightboxOpen)
-    }, [inbox, url, activeImage, lightboxOpen]);
+    }, [inbox, url, selectedImage, lightboxOpen, selectedImages]);
 
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -274,6 +281,16 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         // console.log(/\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(url))
         return /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(url);
     };
+
+
+    const handleImageClick = (attachment, index, mId) => {
+        setLightboxOpen(true);
+        setMessageId(mId);
+        const filteredImages = inbox.find((message) => message.id === mId).attachments;
+        console.log("filteredImages", filteredImages)
+        setSelectedImages(filteredImages);
+        setSelectedImage(attachment?.url);
+    }
 
 
     return (
@@ -335,27 +352,24 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 },
                             ];
 
+
                         const galleryImages = images.filter((image) => isImageFile(image.src));
 
-                        console.log("images", images)
-                        console.log("galleryImages", galleryImages)
+                        // console.log("images", images)
+                        // console.log("galleryImages", galleryImages)
 
-                        const handleImageClick = (index) => {
-                            setActiveImage(index);
-                            setLightboxOpen(true);
-                        };
 
-                        const handleMovePrev = () => {
-                            setActiveImage((activeImage - 1 + galleryImages.length) % galleryImages.length);
-                        };
-
-                        const handleMoveNext = () => {
-                            setActiveImage((activeImage + 1) % galleryImages.length);
-                        };
-
-                        const handleClose = () => {
-                            setLightboxOpen(false);
-                        };
+                        // const handleMovePrev = () => {
+                        //     setActiveImage((activeImage - 1 + galleryImages.length) % galleryImages.length);
+                        // };
+                        //
+                        // const handleMoveNext = () => {
+                        //     setActiveImage((activeImage + 1) % galleryImages.length);
+                        // };
+                        //
+                        // const handleClose = () => {
+                        //     setLightboxOpen(false);
+                        // };
 
                         // setUrl(message?.attachmentUrl);
 
@@ -375,59 +389,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                         </div>
                                     )}
 
-                                    {/* For images attachments */}
-
-                                    {/*{(message?.attachments || message?.attachmentUrl) && (*/}
-                                    {/*    <div className="attachment">*/}
-                                    {/*        {message.attachments ? (*/}
-                                    {/*            message.attachments.map((attachment, index) => (*/}
-                                    {/*                isImageFile(attachment.url) ? (*/}
-                                    {/*                    <div className="image-preview mt-2" key={index}>*/}
-                                    {/*                        <img*/}
-                                    {/*                            src={*/}
-                                    {/*                                attachment.url.startsWith(`data:${attachment.filetype}`)*/}
-                                    {/*                                    ? attachment.url*/}
-                                    {/*                                    : attachment.url*/}
-                                    {/*                            }*/}
-                                    {/*                            alt="attachment"*/}
-                                    {/*                            className="max-w-xs rounded-lg"*/}
-                                    {/*                        />*/}
-                                    {/*                    </div>*/}
-                                    {/*                ) : (*/}
-                                    {/*                    <div key={index}>*/}
-                                    {/*                        <img*/}
-                                    {/*                            src={attachment.url}*/}
-                                    {/*                            alt="attachment"*/}
-                                    {/*                            className="max-w-xs rounded-lg"*/}
-                                    {/*                        />*/}
-                                    {/*                    </div>*/}
-                                    {/*                )*/}
-                                    {/*            ))*/}
-                                    {/*        ) : (*/}
-                                    {/*            isImageFile(message.attachmentUrl) ? (*/}
-                                    {/*                <div className="image-preview mt-2">*/}
-                                    {/*                    <img*/}
-                                    {/*                        src={*/}
-                                    {/*                            message.attachmentUrl.startsWith(`data:${message.filetype}`)*/}
-                                    {/*                                ? message.attachmentUrl*/}
-                                    {/*                                : message.attachmentUrl*/}
-                                    {/*                        }*/}
-                                    {/*                        alt="attachment"*/}
-                                    {/*                        className="max-w-xs rounded-lg"*/}
-                                    {/*                    />*/}
-                                    {/*                </div>*/}
-                                    {/*            ) : (*/}
-                                    {/*                <div>*/}
-                                    {/*                    <img*/}
-                                    {/*                        src={message.attachmentUrl}*/}
-                                    {/*                        alt="attachment"*/}
-                                    {/*                        className="max-w-xs rounded-lg"*/}
-                                    {/*                    />*/}
-                                    {/*                </div>*/}
-                                    {/*            )*/}
-                                    {/*        )}*/}
-                                    {/*    </div>*/}
-                                    {/*)}*/}
 
                                     {/*------- For images attachments --------*/}
 
@@ -440,13 +401,15 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                     {message.attachments.map((attachment, index) => (
 
                                                         <div key={attachment?.url || attachment?.attachmentUrl?.url}
-                                                             className="attachment border ">
+                                                             className="attachment border "
+                                                             onClick={() => handleImageClick(attachment, index, message?.id)}
+                                                        >
                                                             {isImageFile(attachment?.url || (attachment?.attachmentUrl?.url)) ? (
                                                                 <img
                                                                     src={attachment?.url || attachment?.attachmentUrl?.url}
                                                                     alt="attachment"
                                                                     className="max-w-[280px] max-h-[200px] rounded-lg cursor-pointer"
-                                                                    onClick={() => handleImageClick(index)}
+
                                                                 />
                                                             ) : (
                                                                 <>
@@ -499,145 +462,12 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                         </div>
                                     )}
 
-                                    {/*---- LightBox modal ----------*/}
-                                    {lightboxOpen && (
-                                        <Lightbox
-                                            open={lightboxOpen}
-                                            onClose={(event) => {
-                                                console.log('Modal closed:', event);
-                                                setLightboxOpen(false);
-                                            }}
-                                            index={activeImage}
-                                            slides={images.map((image) => ({
-                                                src: image.src,
-                                                alt: image.alt,
-                                            }))}
-                                            onMovePrev={handleMovePrev}
-                                            onMoveNext={handleMoveNext}
-                                        />
-                                    )}
 
-
-                                    {/*{message?.attachments && (message?.attachments || message?.attachmentUrl) &&*/
-                                    }
-                                    {/*    message?.attachments.length >= 1 && (*/
-                                    }
-                                    {/*        <div className="flex flex-wrap justify-start">*/
-                                    }
-                                    {/*            {message.attachments.map((attachment) => (*/
-                                    }
-                                    {/*                <div key={attachment?.url || message?.attachmentUrl}*/
-                                    }
-                                    {/*                     className="attachment mb-7">*/
-                                    }
-                                    {/*                    {message?.attachmentUrl?.startsWith('data:image/') ? (*/
-                                    }
-                                    {/*                        <img*/
-                                    }
-                                    {/*                            src={(message?.attachmentUrl ? message?.attachmentUrl : attachment?.url) ||*/
-                                    }
-                                    {/*                                attachment?.url}*/
-                                    }
-                                    {/*                            alt="attachment"*/
-                                    }
-                                    {/*                            className="max-w-xs rounded-lg"/>*/
-                                    }
-                                    {/*                    ) : (*/
-                                    }
-                                    {/*                        <img*/
-                                    }
-                                    {/*                            src={(attachment?.url ? attachment?.url : message?.attachmentUrl) ||*/
-                                    }
-                                    {/*                                message?.attachmentUrl}*/
-                                    }
-                                    {/*                            alt="attachment"*/
-                                    }
-                                    {/*                            className="max-w-xs rounded-lg"/>*/
-                                    }
-                                    {/*                    )}*/
-                                    }
-                                    {/*                </div>*/
-                                    }
-                                    {/*            ))}*/
-                                    }
-                                    {/*        </div>*/
-                                    }
-                                    {/*    )}*/
-                                    }
-
-
-                                    {/*/!* For images attachments *!/*/
-                                    }
-                                    {/*{message?.attachments || message?.attachmentUrl && (*/
-                                    }
-                                    {/*    <div className="attachment">*/
-                                    }
-                                    {/*        {isImageFile(*/
-                                    }
-                                    {/*            message?.attachment?.url || message?.attachmentUrl*/
-                                    }
-                                    {/*        ) ? (*/
-                                    }
-                                    {/*            <div className="image-preview mt-2">*/
-                                    }
-                                    {/*                <img*/
-                                    }
-                                    {/*                    src={*/
-                                    }
-                                    {/*                        message?.attachmentUrl?.startsWith(*/
-                                    }
-                                    {/*                            `data:${message.filetype}`*/
-                                    }
-                                    {/*                        )*/
-                                    }
-                                    {/*                            ? message.attachmentUrl*/
-                                    }
-                                    {/*                            : message?.attachment?.url ||*/
-                                    }
-                                    {/*                            message?.attachmentUrl*/
-                                    }
-                                    {/*                    }*/
-                                    }
-                                    {/*                    alt="attachment"*/
-                                    }
-                                    {/*                    className="max-w-xs rounded-lg"*/
-                                    }
-                                    {/*                />*/
-                                    }
-                                    {/*            </div>*/
-                                    }
-                                    {/*        ) : (*/
-                                    }
-                                    {/*            <div>*/
-                                    }
-                                    {/*                <img*/
-                                    }
-                                    {/*                    src={*/
-                                    }
-                                    {/*                        message?.attachment?.url*/
-                                    }
-                                    {/*                            ? message?.attachment?.url ||*/
-                                    }
-                                    {/*                            message?.attachmentUrl*/
-                                    }
-                                    {/*                            : message?.attachmentUrl*/
-                                    }
-                                    {/*                    }*/
-                                    }
-                                    {/*                    alt="attachment"*/
-                                    }
-                                    {/*                    className="max-w-xs rounded-lg"*/
-                                    }
-                                    {/*                />*/
-                                    }
-                                    {/*            </div>*/
-                                    }
-                                    {/*        )}*/
-                                    }
-                                    {/*    </div>*/
-                                    }
-                                    {/*)}*/
-                                    }
+                                    {/*{*/}
+                                    {/*    lightboxOpen && (*/}
+                                    {/*        <ImageModal/>*/}
+                                    {/*    )*/}
+                                    {/*}*/}
 
 
                                     {/*--------------------For file attachments---------------*/}
@@ -773,8 +603,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                             )}
                                         </div>
                                     )}
+                                    {/*-----------------------------------*/}
 
-                                    {/*--------------------------------------*/}
 
                                     {/*message?.attachments?.length >= 1 &&*/
                                     }
@@ -997,6 +827,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                   ) : null} */
                                     }
 
+
                                     <small className="flex justify-end mt-3">
                                         {formatDate(message.createdAt || message.attachmentUrl.createdAt)}
                                     </small>
@@ -1006,7 +837,54 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             ;
                     })}
                 </ul>
+
+
             </div>
+
+
+            {/*---- LightBox modal ----------*/}
+            {lightboxOpen && (
+                <Lightbox
+                    open={lightboxOpen}
+                    onClose={(event) => {
+                        console.log('Modal closed:', event);
+                        setLightboxOpen(false);
+                    }}
+                    slides={selectedImages.map((image) => ({
+                        src: image.url,
+                        alt: image.alt,
+                    }))}
+                />
+
+                // <div className='border border-black'>
+                //     <ImageGallery
+                //         items={selectedImages.map((image) => ({
+                //             original: image.url,
+                //             thumbnail: image.url
+                //         }))}
+                //     >
+                //         <button>close btn</button>
+                //         <div className="max-w-md max-h-md p-4 bg-white rounded relative">
+                //             <button
+                //                 className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-800"
+                //                 onClick={() => {
+                //                     setLightboxOpen(false);
+                //                 }}
+                //             >close
+                //                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                //                      fill="none" stroke="currentColor" strokeWidth="2">
+                //                     <path strokeLinecap="round" strokeLinejoin="round"
+                //                           d="M6 18L18 6M6 6l12 12"/>
+                //                 </svg>
+                //             </button>
+                //         </div>
+                //     </ImageGallery>
+                // </div>
+
+            )}
+
+            {/*--------------------------------------*/}
+
 
             {/* For images preview before sending */}
             {filePreview && (

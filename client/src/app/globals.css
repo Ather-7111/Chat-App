@@ -2,28 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-.grid-container {
-    position: relative;
+/* Make the gallery full-screen */
+.fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
 }
 
-.grid-sizer,
-.grid-item {
-    width: 25%;
+/* Add a dark background with opacity */
+.bg-black.bg-opacity-75 {
+    background-color: rgba(0, 0, 0, 0.75);
 }
 
-.image-link {
-    display: block;
-    position: relative;
-    overflow: hidden;
+/* Customize the image gallery styles */
+.image-gallery {
+    /* Make the gallery container full-screen */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.image-link img {
-    display: block;
-    max-width: 100%;
-    transition: transform .2s;
+.image-gallery-content {
+    /* Make the image container full-screen */
+    width: 100%;
+    height: 100%;
 }
 
-.image-link:hover img {
-    transform: scale(1.1);
+.image-gallery-image {
+    /* Make the image full-screen */
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
