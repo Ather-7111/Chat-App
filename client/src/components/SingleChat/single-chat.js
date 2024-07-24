@@ -7,7 +7,6 @@ import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgIds} from "@/lib/actions/attachement";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import ImageModal from "@/components/ImageModal/imageModal";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/css/image-gallery.css";
 
@@ -23,7 +22,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [messageId, setMessageId] = useState('')
-    const [gridImages, setGridImages] = useState([])
     const [selectedImages, setSelectedImages] = useState([])
 
 
@@ -375,19 +373,19 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                     {(message?.attachments || (message?.attachmentUrl || message?.attachment?.url)) && (
                                         <div>
                                             {message?.attachments && message?.attachments.length >= 1 ? (
-                                                <div className="flex flex-wrap w-[600px]">
+                                                <div className="flex flex-wrap w-[486px]">
 
                                                     {message.attachments.map((attachment, index) => (
 
                                                         <div key={attachment?.url || attachment?.attachmentUrl?.url}
-                                                             className="attachment border "
+                                                             className="grid-item attachment border "
                                                              onClick={() => handleImageClick(attachment, index, message?.id)}
                                                         >
                                                             {isImageFile(attachment?.url || (attachment?.attachmentUrl?.url)) ? (
                                                                 <img
                                                                     src={attachment?.url || attachment?.attachmentUrl?.url}
                                                                     alt="attachment"
-                                                                    className="max-w-[280px] max-h-[200px] rounded-lg cursor-pointer"
+                                                                    className="w-[240px] h-[200px] rounded-lg cursor-pointer"
 
                                                                 />
                                                             ) : (
@@ -404,6 +402,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                         </div>
 
                                                     ))}
+
+
                                                 </div>
                                             ) : (
                                                 <div className="attachment flex">
@@ -418,7 +418,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                                             : (message?.attachment?.url || message?.attachmentUrl?.url)
                                                                     }
                                                                     alt="attachment"
-                                                                    className="max-w-[280px] max-h-[200px] rounded-lg"
+                                                                    className="w-[240px] h-[200px] rounded-lg"
                                                                 />
                                                             </div>
                                                         )
@@ -431,7 +431,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                                         message?.attachmentUrl
                                                                     }
                                                                     alt="attachment"
-                                                                    className="max-w-[280px] max-h-[200px] rounded-lg"
+                                                                    className="w-[240px] h-[200px] rounded-lg"
                                                                 />
                                                             </div>
                                                         )
@@ -452,8 +452,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                             const isSender = message.senderId === loggedInUserId;
 
                                                             const attachmentUrl = isSender
-                                                                ? attachment?.url || attachment?.attachment?.url
-                                                                : attachment?.url;
+                                                                ? (attachment?.url || attachment?.attachment?.url)
+                                                                : (attachment?.url || attachmentUrl?.url);
 
                                                             const isMatchingType =
                                                                 typeof attachmentUrl === 'string' &&
@@ -489,7 +489,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                                                 {title || "View File"}
                                                                             </p>
                                                                             <a
-                                                                                href={message?.attachmentUrl || attachment?.url}
+                                                                                href={(message?.attachmentUrl || message?.attachmentUrl?.url) || attachment?.url }
                                                                                 target="_blank"
                                                                                 download
                                                                                 className="flex items-center text-black hover:underline mt-1"
