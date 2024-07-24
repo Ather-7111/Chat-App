@@ -353,26 +353,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             ];
 
 
-                        const galleryImages = images.filter((image) => isImageFile(image.src));
-
-                        // console.log("images", images)
-                        // console.log("galleryImages", galleryImages)
-
-
-                        // const handleMovePrev = () => {
-                        //     setActiveImage((activeImage - 1 + galleryImages.length) % galleryImages.length);
-                        // };
-                        //
-                        // const handleMoveNext = () => {
-                        //     setActiveImage((activeImage + 1) % galleryImages.length);
-                        // };
-                        //
-                        // const handleClose = () => {
-                        //     setLightboxOpen(false);
-                        // };
-
-                        // setUrl(message?.attachmentUrl);
-
                         return (
                             <li className={containerClass} key={index}>
                                 <div className={messageClass}>
@@ -388,7 +368,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                             {message.text}
                                         </div>
                                     )}
-
 
                                     {/*------- For images attachments --------*/}
 
@@ -461,14 +440,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                             )}
                                         </div>
                                     )}
-
-
-                                    {/*{*/}
-                                    {/*    lightboxOpen && (*/}
-                                    {/*        <ImageModal/>*/}
-                                    {/*    )*/}
-                                    {/*}*/}
-
 
                                     {/*--------------------For file attachments---------------*/}
 
@@ -606,228 +577,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                     {/*-----------------------------------*/}
 
 
-                                    {/*message?.attachments?.length >= 1 &&*/
-                                    }
-                                    {/*message?.attachments.map((attachment) => (*/
-                                    }
-                                    {/*    <div key={attachment.url} className="attachment-info">*/
-                                    }
-                                    {/*        {!isImageFile(attachment?.url) ? (*/
-                                    }
-
-                                    {/*            fileTypes.map((fileType) => {*/
-                                    }
-
-                                    {/*                const isSender =*/
-                                    }
-                                    {/*                    message.senderId === loggedInUserId;*/
-                                    }
-
-                                    {/*                const attachmentUrl = isSender*/
-                                    }
-                                    {/*                    ? attachment.url || attachment.attachmentUrl*/
-                                    }
-                                    {/*                    : attachment.url;*/
-                                    }
-
-                                    {/*                const isMatchingType =*/
-                                    }
-                                    {/*                    attachmentUrl?.endsWith(*/
-                                    }
-                                    {/*                        `.${fileType.extension}`*/
-                                    }
-                                    {/*                    ) ||*/
-                                    }
-                                    {/*                    attachmentUrl?.startsWith(*/
-                                    }
-                                    {/*                        `data:${fileType.filetype}`*/
-                                    }
-                                    {/*                    );*/
-                                    }
-
-                                    {/*                if (isMatchingType) {*/
-                                    }
-                                    {/*                    const {*/
-                                    }
-                                    {/*                        background,*/
-                                    }
-                                    {/*                        extension,*/
-                                    }
-                                    {/*                        title,*/
-                                    }
-                                    {/*                        icon,*/
-                                    }
-                                    {/*                    } = fileType;*/
-                                    }
-
-                                    {/*                    return (*/
-                                    }
-                                    {/*                        <div key={extension} className="flex flex-col">*/
-                                    }
-                                    {/*                            <div*/
-                                    }
-                                    {/*                                className="attachment-thumbnail"*/
-                                    }
-                                    {/*                                style={{*/
-                                    }
-                                    {/*                                    backgroundImage: `url(${background})`,*/
-                                    }
-                                    {/*                                    backgroundSize: "cover",*/
-                                    }
-                                    {/*                                    width: "350px",*/
-                                    }
-                                    {/*                                    height: "200px",*/
-                                    }
-                                    {/*                                    borderRadius: "8px",*/
-                                    }
-                                    {/*                                    backgroundColor: "#f8f9fa",*/
-                                    }
-                                    {/*                                }}*/
-                                    }
-                                    {/*                            ></div>*/
-                                    }
-                                    {/*                            <div*/
-                                    }
-                                    {/*                                className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">*/
-                                    }
-                                    {/*                                <div>{icon}</div>*/
-                                    }
-                                    {/*                                <p className="text-black hover:underline mt-2">*/
-                                    }
-                                    {/*                                    {title || "View File"}*/
-                                    }
-                                    {/*                                </p>*/
-                                    }
-                                    {/*                                <a*/
-                                    }
-                                    {/*                                    href={*/
-                                    }
-                                    {/*                                        attachment?.attachmentUrl*/
-                                    }
-                                    {/*                                            ? attachment?.attachmentUrl*/
-                                    }
-                                    {/*                                            : attachment?.url*/
-                                    }
-                                    {/*                                    }*/
-                                    }
-                                    {/*                                    target="_blank"*/
-                                    }
-                                    {/*                                    download*/
-                                    }
-                                    {/*                                    className="flex items-center text-black hover:underline mt-1"*/
-                                    }
-                                    {/*                                >*/
-                                    }
-                                    {/*                                    <IoMdDownload className="mr-1"/>*/
-                                    }
-                                    {/*                                </a>*/
-                                    }
-                                    {/*                            </div>*/
-                                    }
-                                    {/*                        </div>*/
-                                    }
-                                    {/*                    );*/
-                                    }
-                                    {/*                }*/
-                                    }
-                                    {/*                return null;*/
-                                    }
-                                    {/*            })*/
-                                    }
-                                    {/*        ) : (*/
-                                    }
-                                    {/*            <img*/
-                                    }
-                                    {/*                src={attachment?.url}*/
-                                    }
-                                    {/*                alt="Image attachment"*/
-                                    }
-                                    {/*                className="attachment-thumbnail"*/
-                                    }
-                                    {/*                style={{*/
-                                    }
-                                    {/*                    width: "350px",*/
-                                    }
-                                    {/*                    height: "200px",*/
-                                    }
-                                    {/*                    borderRadius: "8px",*/
-                                    }
-                                    {/*                    backgroundColor: "#f8f9fa",*/
-                                    }
-                                    {/*                }}*/
-                                    }
-                                    {/*            />*/
-                                    }
-                                    {/*        )}*/
-                                    }
-                                    {/*    </div>*/
-                                    }
-                                    {/*))}*/
-                                    }
-
-                                    {/* {message?.attachment?.url || message?.attachmentUrl ? (
-                    // && (!isImageFile(message?.attachment?.url || message?.attachmentUrl) )
-                    <div className="attachment-info flex flex-col mt-2">
-                      {fileTypes.map((fileType) => {
-                        const isSender = message.senderId === loggedInUserId;
-
-                        const attachmentUrl = isSender
-                          ? message?.attachment?.url || message?.attachmentUrl
-                          : message?.attachment?.url;
-
-                        // console.log("attachment URL -->", attachmentUrl);
-
-                        const isMatchingType =
-                          attachmentUrl?.endsWith(`.${fileType.extension}`) ||
-                          attachmentUrl?.startsWith(
-                            `data:${fileType.filetype}`
-                          );
-
-                        if (isMatchingType) {
-                          const { background, extension, title, icon } =
-                            fileType;
-
-                          return (
-                            <div key={extension} className="flex flex-col">
-                              <div
-                                className="attachment-thumbnail"
-                                style={{
-                                  backgroundImage: `url(${background})`,
-                                  backgroundSize: "cover",
-                                  width: "350px",
-                                  height: "200px",
-                                  borderRadius: "8px",
-                                  backgroundColor: "#f8f9fa",
-                                }}
-                              ></div>
-                              <div className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
-                                <div>{icon}</div>
-                                <p className="text-black hover:underline mt-2">
-                                  {title || "View File"}
-                                </p>
-                                <a
-                                  href={
-                                    message?.attachmentUrl
-                                      ? message?.attachmentUrl
-                                      : message?.attachment?.url
-                                  }
-                                  target="_blank"
-                                  download
-                                  className="flex items-center text-black hover:underline mt-1"
-                                >
-                                  <IoMdDownload className="mr-1" />
-                                </a>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  ) : null} */
-                                    }
-
-
                                     <small className="flex justify-end mt-3">
                                         {formatDate(message.createdAt || message.attachmentUrl.createdAt)}
                                     </small>
@@ -837,8 +586,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             ;
                     })}
                 </ul>
-
-
             </div>
 
 
@@ -846,10 +593,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
             {lightboxOpen && (
                 <Lightbox
                     open={lightboxOpen}
-                    onClose={(event) => {
-                        console.log('Modal closed:', event);
-                        setLightboxOpen(false);
-                    }}
+                    close={() => setLightboxOpen(false)}
+                    // onClose={(event) => {
+                    //     console.log('Modal closed:', event);
+                    //     setLightboxOpen(false);
+                    // }}
                     slides={selectedImages.map((image) => ({
                         src: image.url,
                         alt: image.alt,
