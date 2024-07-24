@@ -5,7 +5,8 @@ import {MdAttachment} from "react-icons/md";
 import {getChat} from "@/lib/actions/chat";
 import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgIds} from "@/lib/actions/attachement";
-
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 export default function SingleChatPage({selectedUser, chat, socket}) {
     const [inbox, setInbox] = useState([]);
@@ -16,14 +17,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const [filePreviewUrl, setFilePreviewUrl] = useState("");
     const [ext, setExt] = useState("");
     const [url, setUrl] = useState('')
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [activeImage, setActiveImage] = useState(0);
 
     const loggedInUserId = localStorage.getItem("userId");
 
-    const imageTypes = [
-        {fileType: "image/jpg"},
-        {fileType: "image/png"},
-        {fileType: "image/jpeg"}
-    ]
 
     const fileTypes = [
         {
@@ -254,7 +252,10 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         console.log("inbox-->", inbox);
         // console.log("message->", message);
         console.log("url", url)
-    }, [inbox, url]);
+
+        console.log("activeImage", activeImage)
+        console.log("lightboxOpen", lightboxOpen)
+    }, [inbox, url, activeImage, lightboxOpen]);
 
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -322,6 +323,39 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             (type) => type.extension === fileType
                         );
 
+                        const images = message.attachments
+                            ? message.attachments.map((attachment) => ({
+                                src: attachment.url || attachment.attachmentUrl?.url,
+                                alt: 'attachment',
+                            }))
+                            : [
+                                {
+                                    src: message.attachmentUrl || message.attachment?.url,
+                                    alt: 'attachment',
+                                },
+                            ];
+
+                        const galleryImages = images.filter((image) => isImageFile(image.src));
+
+                        console.log("images", images)
+                        console.log("galleryImages", galleryImages)
+
+                        const handleImageClick = (index) => {
+                            setActiveImage(index);
+                            setLightboxOpen(true);
+                        };
+
+                        const handleMovePrev = () => {
+                            setActiveImage((activeImage - 1 + galleryImages.length) % galleryImages.length);
+                        };
+
+                        const handleMoveNext = () => {
+                            setActiveImage((activeImage + 1) % galleryImages.length);
+                        };
+
+                        const handleClose = () => {
+                            setLightboxOpen(false);
+                        };
 
                         // setUrl(message?.attachmentUrl);
 
@@ -395,13 +429,15 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                     {/*    </div>*/}
                                     {/*)}*/}
 
+                                    {/*------- For images attachments --------*/}
+
 
                                     {(message?.attachments || (message?.attachmentUrl || message?.attachment?.url)) && (
                                         <div>
                                             {message?.attachments && message?.attachments.length >= 1 ? (
                                                 <div className="flex flex-wrap w-[600px]">
 
-                                                    {message.attachments.map((attachment) => (
+                                                    {message.attachments.map((attachment, index) => (
 
                                                         <div key={attachment?.url || attachment?.attachmentUrl?.url}
                                                              className="attachment border ">
@@ -409,16 +445,18 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                                 <img
                                                                     src={attachment?.url || attachment?.attachmentUrl?.url}
                                                                     alt="attachment"
-                                                                    className="max-w-[280px] max-h-[200px] rounded-lg"
+                                                                    className="max-w-[280px] max-h-[200px] rounded-lg cursor-pointer"
+                                                                    onClick={() => handleImageClick(index)}
                                                                 />
                                                             ) : (
                                                                 <>
-                                                                    <p>hello</p>
-                                                                    <img
-                                                                        src={attachment?.url || attachment?.attachmentUrl?.url}
-                                                                        alt="attachment"
-                                                                        className="max-w-[280px] max-h-[200px] rounded-lg"
-                                                                    />
+                                                                    {/*<p>hello</p>*/}
+                                                                    {/*<img*/}
+                                                                    {/*    src={attachment?.url || attachment?.attachmentUrl?.url}*/}
+                                                                    {/*    alt="attachment"*/}
+                                                                    {/*    className="max-w-[280px] max-h-[200px] rounded-lg"*/}
+                                                                    {/*/>*/}
+
                                                                 </>
                                                             )}
                                                         </div>
@@ -459,6 +497,24 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                 </div>
                                             )}
                                         </div>
+                                    )}
+
+                                    {/*---- LightBox modal ----------*/}
+                                    {lightboxOpen && (
+                                        <Lightbox
+                                            open={lightboxOpen}
+                                            onClose={(event) => {
+                                                console.log('Modal closed:', event);
+                                                setLightboxOpen(false);
+                                            }}
+                                            index={activeImage}
+                                            slides={images.map((image) => ({
+                                                src: image.src,
+                                                alt: image.alt,
+                                            }))}
+                                            onMovePrev={handleMovePrev}
+                                            onMoveNext={handleMoveNext}
+                                        />
                                     )}
 
 
