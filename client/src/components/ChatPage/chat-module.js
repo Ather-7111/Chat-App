@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SingleChatPage from "../SingleChat/single-chat";
 import "./style.css";
 import { getAllUsers } from "@/lib/actions/user";
 import { createChat } from "@/lib/actions/chat";
 import { io } from "socket.io-client";
 import { deletenotifications } from "@/lib/actions/notification";
 import addNotification from "react-push-notification";
+import SingleChatPage from "@/components/chat";
 
 export default function ChatPage() {
   const [allParticipants, setAllParticipants] = useState([]);
@@ -17,6 +17,7 @@ export default function ChatPage() {
   const [notifications, setNotifications] = useState({});
   const [activeChat, setActiveChat] = useState(null);
   const [notifyText, setNotifyText] = useState("");
+  const [file , setFile] = useState(null)
 
   const loggedInUserId = localStorage.getItem("userId");
   const loggedInUserName = localStorage.getItem("userName");
@@ -95,6 +96,7 @@ export default function ChatPage() {
     setChat(chat);
     setActiveChat(chat);
 
+
     if (socket) {
       socket.emit("joinRoom", chat.id);
       console.log(`User joined room: ${chat.id}`);
@@ -170,6 +172,7 @@ export default function ChatPage() {
                 selectedUser={selectedUser}
                 chat={chat}
                 socket={socket}
+                file={file}
               />
             )}
           </div>
