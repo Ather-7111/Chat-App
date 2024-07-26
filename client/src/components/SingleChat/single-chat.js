@@ -59,33 +59,38 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
             socket.emit("joinRoom", chat.id);
             console.log("chat id available", chat.id);
 
+            const isCurrentUser = message?.senderId === loggedInUserId
+            console.log("Current user:", isCurrentUser)
+
+
             // Handle incoming messages from socket
             socket.on("message", (message) => {
                 console.log("Message from socket:", message);
 
-
-                // Add incoming message to inbox
-                if (message && message.text && message.senderId !== loggedInUserId) {
-                    console.log("message-->", message);
-                    setInbox((prevInbox) => [...prevInbox, message]);
-                } else if (
-                    message &&
-                    (message.attachment?.url || message.attachmentUrl)
-                ) {
-                    console.log("attachment message-->", message);
-                    setInbox((prevInbox) => [...prevInbox, message]);
-                } else if (Array.isArray(message.attachments)) {
+                // Check if message has attachments
+                if (Array.isArray(message.attachments)) {
                     console.log("multiple attachment message-->", message);
 
-                    for (let i in message.attachments) {
-                        let msg = {
-                            chatId: message.message.chatId,
-                            senderId: loggedInUserId,
-                            receiverId: selectedUser.id,
-                        };
-                        msg.attachmentUrl = message.attachments[i];
-                        setInbox((prevInbox) => [...prevInbox, msg]);
-                    }
+                    // Create a new message object with all attachments
+                    const messageWithAttachments = {
+                        ...message,
+                        attachments: message.attachments
+                    };
+                    setInbox((prevInbox) => [...prevInbox, messageWithAttachments]);
+
+                } else if (message.attachment || message.attachmentUrl) {
+                    console.log("single attachment message-->", message);
+
+                    // Handle single attachment
+                    const singleAttachment = {
+                        ...message,
+                        attachments: [message.attachment || message.attachmentUrl]
+                    };
+
+                    setInbox((prevInbox) => [...prevInbox, singleAttachment]);
+                } else {
+                    // Handle regular text message
+                    setInbox((prevInbox) => [...prevInbox, message]);
                 }
             });
 
@@ -119,7 +124,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 chat.id
             );
 
-            console.log("hellllllo ather", allMessages);
+            console.log("all messages without attachments", allMessages);
 
             // Extract message IDs for attachment messages
             const messageIds = allMessages
@@ -176,6 +181,9 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const handleSendMessage = async (event) => {
         event.preventDefault();
 
+        setFile(null)
+        setFilePreview(null);
+
         if (!message.trim() && (!file || file.length === 0)) {
             return;
         }
@@ -209,7 +217,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 try {
                     const newMessage = await readFile(currentFile);
                     newMessages.push(newMessage);
-                    setInbox((prevInbox) => [...prevInbox, newMessage]);
+                    setInbox((prevInbox) => [...prevInbox, ...newMessages]);
                 } catch (error) {
                     console.error("Error reading file:", error);
                 }
@@ -248,9 +256,9 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         // console.log("file extension --------->", ext);
         console.log("inbox-->", inbox);
         // console.log("message->", message);
-        console.log("url", url)
-        console.log("selectedImage", selectedImage)
-        console.log("selectedImages", selectedImages)
+        // console.log("url", url)
+        // console.log("selectedImage", selectedImage)
+        // console.log("selectedImages", selectedImages)
 
     }, [inbox, url, selectedImage, lightboxOpen, selectedImages]);
 
@@ -347,7 +355,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                             <li className={containerClass} key={index}>
                                 <div className={messageClass}>
 
-                                    {/* For text */}
+                                    {/*---------- For text -----------------*/}
 
                                     {message.text !== "" && (
                                         <div className={bubbleClass}>

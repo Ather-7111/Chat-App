@@ -63,6 +63,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
             socket.on("message", (message) => {
                 console.log("Message from socket:", message);
 
+                const isSentByCurrentUser = message.senderId === loggedInUserId &&
+                    message.receiverId !== loggedInUserId;
+                console.log("isSentByCurrentUser", isSentByCurrentUser)
+
+
                 // console.log("hojra",Array.isArray(message.attachments))
 
                 // Add incoming message to inbox
@@ -177,6 +182,9 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     const handleSendMessage = async (event) => {
         event.preventDefault();
 
+        setFile(null);
+        setFilePreview(null);
+
         if (!message.trim() && (!file || file.length === 0)) {
             return;
         }
@@ -248,8 +256,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
     useEffect(() => {
         // console.log("file extension --------->", ext);
         console.log("inbox-->", inbox);
-        console.log("FilePreview", filePreview)
-        console.log("file", file)
+        // console.log("FilePreview", filePreview)
+        // console.log("file", file)
 
     }, [inbox, url, selectedImage, lightboxOpen, selectedImages, file, filePreview]);
 
@@ -311,9 +319,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                     {inbox.map((message, index) => {
 
                         // console.log("message -----", message)
-                        const isSentByCurrentUser = message.senderId === loggedInUserId;
-                        // console.log("isSentByCurrentUser", isSentByCurrentUser)
-                        const isReceiver = !isSentByCurrentUser;
+                        const isSentByCurrentUser = message?.senderId === loggedInUserId
+                        const isReceiver = message.senderId !== loggedInUserId;
 
                         const containerClass = isReceiver
                             ? "flex justify-start mb-2"
@@ -353,7 +360,7 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 <div className={messageClass}>
 
                                     {/* For text */}
-                                    {message?.text && message?.text !== "" && (
+                                    {message?.text && message?.text !== "" ? (
                                         <div className={bubbleClass}>
                                             <div className="message-data">
                                                  <span className="message-data-time">
@@ -362,73 +369,74 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                             </div>
                                             {message.text}
                                         </div>
-                                    )}
+                                    ) : (
+                                        // For image attachments
+                                        <>
+                                            {(message?.attachments || (message?.attachmentUrl || message?.attachment?.url)) && (
+                                                <div>
+                                                    {message?.attachments && message?.attachments.length >= 1 ? (
+                                                        <div className="flex flex-wrap w-[486px]">
 
-                                    {/*------- For images attachments --------*/}
+                                                            {message.attachments.map((attachment, index) => (
 
+                                                                <div
+                                                                    key={attachment?.url || attachment?.attachmentUrl?.url}
+                                                                    className="grid-item attachment border "
+                                                                    onClick={() => handleImageClick(attachment, index, message?.id)}
+                                                                >
+                                                                    {isImageFile(attachment?.url || (attachment?.attachmentUrl?.url)) ? (
+                                                                        <img
+                                                                            src={attachment?.url || attachment?.attachmentUrl?.url}
+                                                                            alt="attachment"
+                                                                            className="w-[240px] h-[200px] rounded-lg cursor-pointer"
 
-                                    {(message?.attachments || (message?.attachmentUrl || message?.attachment?.url)) && (
-                                        <div>
-                                            {message?.attachments && message?.attachments.length >= 1 ? (
-                                                <div className="flex flex-wrap w-[486px]">
-
-                                                    {message.attachments.map((attachment, index) => (
-
-                                                        <div key={attachment?.url || attachment?.attachmentUrl?.url}
-                                                             className="grid-item attachment border "
-                                                             onClick={() => handleImageClick(attachment, index, message?.id)}
-                                                        >
-                                                            {isImageFile(attachment?.url || (attachment?.attachmentUrl?.url)) ? (
-                                                                <img
-                                                                    src={attachment?.url || attachment?.attachmentUrl?.url}
-                                                                    alt="attachment"
-                                                                    className="w-[240px] h-[200px] rounded-lg cursor-pointer"
-
-                                                                />
-                                                            ) : null}
+                                                                        />
+                                                                    ) : null}
+                                                                </div>
+                                                            ))}
                                                         </div>
-
-                                                    ))}
-
-
-                                                </div>
-                                            ) : (
-                                                <div className="attachment flex">
-                                                    {(isImageFile(message?.attachmentUrl ||
-                                                        (message?.attachment?.url || message?.attachmentUrl?.url))) ?
-                                                        (
-                                                            <div className="image-preview mt-2">
-                                                                <img
-                                                                    src={
-                                                                        message?.attachmentUrl?.startsWith(`data:${message.filetype}`)
-                                                                            ? (message?.attachmentUrl || message?.attachment?.url)
-                                                                            : (message?.attachment?.url || message?.attachmentUrl?.url)
-                                                                    }
-                                                                    alt="attachment"
-                                                                    className="w-[240px] h-[200px] rounded-lg"
-                                                                />
-                                                            </div>
-                                                        )
-                                                        :
-                                                        (
-                                                            <div>
-                                                                <img
-                                                                    src={
-                                                                        (message?.attachment?.url || message?.attachmentUrl?.url) ||
-                                                                        message?.attachmentUrl
-                                                                    }
-                                                                    alt="attachment"
-                                                                    className="w-[240px] h-[200px] rounded-lg"
-                                                                />
-                                                            </div>
-                                                        )
-                                                    }
+                                                    ) : (
+                                                        <div className="attachment flex">
+                                                            {(isImageFile(message?.attachmentUrl ||
+                                                                (message?.attachment?.url || message?.attachmentUrl?.url))) ?
+                                                                (
+                                                                    <div className="image-preview mt-2">
+                                                                        <img
+                                                                            src={
+                                                                                message?.attachmentUrl?.startsWith(`data:${message.filetype}`)
+                                                                                    ? (message?.attachmentUrl || message?.attachment?.url)
+                                                                                    : (message?.attachment?.url || message?.attachmentUrl?.url)
+                                                                            }
+                                                                            alt="attachment"
+                                                                            className="w-[240px] h-[200px] rounded-lg"
+                                                                        />
+                                                                    </div>
+                                                                )
+                                                                :
+                                                                (
+                                                                    <div>
+                                                                        <img
+                                                                            src={
+                                                                                (message?.attachment?.url || message?.attachmentUrl?.url) ||
+                                                                                message?.attachmentUrl
+                                                                            }
+                                                                            alt="attachment"
+                                                                            className="w-[240px] h-[200px] rounded-lg"
+                                                                        />
+                                                                    </div>
+                                                                )
+                                                            }
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
 
+
+
                                     {/*--------------------For file attachments---------------*/}
+
 
                                     {(message?.attachments ||
                                         (message?.attachmentUrl ||
@@ -438,10 +446,10 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                 message.attachments.map((attachment) => (
                                                     <div key={attachment?.url} className="attachment-info">
                                                         {fileTypes.map((fileType) => {
-                                                            // const isSender = message.senderId === loggedInUserId;
+                                                            const isSender = message.senderId === loggedInUserId;
                                                             // console.log("isSenderM", isSender)
 
-                                                            const attachmentUrl = isSentByCurrentUser
+                                                            const attachmentUrl = isSender
                                                                 ? (attachment?.url || message?.attachmentUrl)
                                                                 : (attachment?.url || (attachment?.attachmentUrl?.url || message?.attachmentUrl?.url));
 
@@ -503,18 +511,18 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                 <div>
                                                     {(message?.attachmentUrl ||
                                                             (message?.attachment?.url || message?.attachmentUrl?.url))
-                                                        &&  (
+                                                        && (
                                                             <div
                                                                 key={message?.attachmentUrl ||
                                                                     (message?.attachment?.url || message?.attachmentUrl?.url)}
                                                                 className="attachment-info">
                                                                 {fileTypes.map((fileType) => {
-                                                                    // const isSender = message.senderId === loggedInUserId;
+                                                                    const isSender = message.senderId === loggedInUserId;
                                                                     // console.log("isSenderS", isSender)
 
-                                                                    const attachmentUrl = isSentByCurrentUser ?
+                                                                    const attachmentUrl = isSender ?
                                                                         // message?.attachmentUrl : (message?.attachment?.url)
-                                                                    (message?.attachmentUrl?.url || message?.attachmentUrl) :
+                                                                        (message?.attachmentUrl?.url || message?.attachmentUrl) :
                                                                         (message?.attachment?.url)
 
                                                                     console.log("attachmentUrl in State---->", attachmentUrl)
@@ -590,7 +598,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
 
 
                                     <small className="flex justify-end mt-3">
-                                        {formatDate(message.createdAt || message.attachmentUrl.createdAt)}
+                                        {formatDate(message.createdAt ||
+                                            message.attachmentUrl.createdAt)}
                                     </small>
                                 </div>
                             </li>

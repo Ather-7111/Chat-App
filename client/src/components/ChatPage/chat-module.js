@@ -172,7 +172,6 @@ export default function ChatPage() {
                 selectedUser={selectedUser}
                 chat={chat}
                 socket={socket}
-                file={file}
               />
             )}
           </div>
