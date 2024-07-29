@@ -379,9 +379,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                     {message?.text && message?.text !== "" ? (
                                         <div className={bubbleClass}>
                                             <div className="message-data">
-                            <span className="message-data-time">
-                                {formatDate(message.createdAt)}
-                            </span>
+                                                <span className="message-data-time">
+                                                    {formatDate(message.createdAt)}
+                                                </span>
                                             </div>
                                             {message.text}
                                         </div>
@@ -400,7 +400,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                     return (
                                                                         <div
                                                                             key={attachmentUrl}
-                                                                            className="grid-item attachment border"
+                                                                            className="grid-item attachment"
                                                                         >
                                                                             {isImage(attachmentUrl) ? (
                                                                                 <div>
@@ -412,27 +412,26 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                     />
                                                                                 </div>
                                                                             ) : (
-                                                                                <div className="shadow-lg w-[496px]">
+                                                                                <div className=" w-[496px]">
                                                                                     {fileTypes.map((fileType) => {
                                                                                         if (attachmentUrl.endsWith(fileType.extension)) {
                                                                                             return (
                                                                                                 <div key={fileType.title}
                                                                                                      className="flex flex-col">
                                                                                                     <div
-                                                                                                        className="attachment-thumbnail"
+                                                                                                        className="attachment-thumbnail rounded-t-xl"
                                                                                                         style={{
                                                                                                             backgroundImage: `url(${fileType.background})`,
                                                                                                             backgroundSize: "cover",
                                                                                                             width: "496px",
                                                                                                             height: "200px",
-                                                                                                            borderRadius: "8px",
-                                                                                                            backgroundColor: "#f8f9fa",
+                                                                                                            // backgroundColor: "#f8f9fa",
                                                                                                         }}
                                                                                                     ></div>
                                                                                                     <div
-                                                                                                        className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
+                                                                                                        className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
                                                                                                         <div>{fileType.icon}</div>
-                                                                                                        <p className="black hover:underline mt-2">
+                                                                                                        <p className="text-white hover:underline mt-2">
                                                                                                             {fileType.title || "View File"}
                                                                                                         </p>
                                                                                                         <a
@@ -440,7 +439,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                                                 (message?.attachment?.url || message?.attachmentUrl?.url)}
                                                                                                             target="_blank"
                                                                                                             download
-                                                                                                            className="flex items-center text-black hover:underline mt-1"
+                                                                                                            className="flex items-center text-white hover:underline mt-1"
                                                                                                         >
                                                                                                             <IoMdDownload
                                                                                                                 className="mr-1"/>
@@ -474,14 +473,14 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        <div className="w-[496px] border border-yellow-600">
+                                                                        <div className="w-[496px]">
                                                                             {fileTypes.map((fileType) => {
                                                                                 const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
                                                                                 const isSenderUrlExists = fileAttachmentUrl?.startsWith(`data:${fileType.filetype}`)
                                                                                 const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileType.extension)
-                                                                                const isFileTypeMatches = fileAttachmentUrl.includes(fileType?.extension || fileType?.filetype)
+                                                                                // const isFileTypeMatches = fileAttachmentUrl.includes(fileType?.extension || fileType?.filetype)
 
-                                                                                console.log("isMatched--->", isFileTypeMatches)
+                                                                                // console.log("isMatched--->", isFileTypeMatches)
 
                                                                                 console.log("fileAttachmentUrl", fileAttachmentUrl)
                                                                                 console.log("isSenderURLExists", isSenderUrlExists)
@@ -492,28 +491,27 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                         <div key={fileType.extension}
                                                                                              className="flex flex-col">
                                                                                             <div
-                                                                                                className="attachment-thumbnail"
+                                                                                                className="attachment-thumbnail rounded-t-xl"
                                                                                                 style={{
                                                                                                     backgroundImage: `url(${fileType.background})`,
                                                                                                     backgroundSize: "cover",
                                                                                                     width: "496px",
                                                                                                     height: "200px",
-                                                                                                    borderRadius: "8px",
-                                                                                                    backgroundColor: "#f8f9fa",
+                                                                                                    // backgroundColor: "#f8f9fa",
                                                                                                 }}
                                                                                             ></div>
                                                                                             <div
-                                                                                                className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2
+                                                                                                className="flex justify-between bg-gray-800 shadow-lg py-5 px-2
                                                                                             rounded-b-xl">
                                                                                                 <div>{fileType.icon}</div>
-                                                                                                <p className="text-black hover:underline mt-2">
+                                                                                                <p className="text-white hover:underline mt-2">
                                                                                                     {fileType.title || "View File"}
                                                                                                 </p>
                                                                                                 <a
                                                                                                     href={message?.attachmentUrl || message?.attachment?.url}
                                                                                                     target="_blank"
                                                                                                     download
-                                                                                                    className="flex items-center text-black hover:underline "
+                                                                                                    className="flex items-center text-white hover:underline "
                                                                                                 >
                                                                                                     <IoMdDownload
                                                                                                         className="mr-1"/>
@@ -532,8 +530,14 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                     </div>
                                                 )
                                             }
+
+
                                         </>
                                     )}
+
+                                    <small className="flex justify-end">
+                                        {formatDate(message?.createdAt || message?.message?.createdAt)}
+                                    </small>
 
                                 </div>
                             </li>
@@ -572,27 +576,20 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                     ))}
                 </div>
             )}
-            <div className="chat-message clearfix">
-                <div className="input-group mb-0 border border-gray-400 flex">
-                    <form
-                        onSubmit={handleSendMessage}
-                        className="flex justify-center items-center w-full px-4"
-                    >
-                        <div className="flex justify-center items-center text-3xl">
-                            <button type="submit">
-                                <IoMdSend/>
-                            </button>
-                        </div>
 
+
+            <div className="chat-message border-t border-gray-700">
+                <div className="input-group mb-0 flex bg-gray-800 p-2 rounded-lg">
+                    <form onSubmit={handleSendMessage} className="flex justify-center items-center w-full">
                         <input
                             onChange={(e) => setMessage(e.target.value)}
                             value={message}
                             name="message"
-                            className="flex-grow p-5 outline-none resize-none"
+                            className="flex-grow p-4 bg-gray-700 text-white outline-none rounded-lg resize-none placeholder-gray-400"
                             placeholder="Enter text here..."
                         />
-                        <label htmlFor="file">
-                            <MdAttachment className="text-3xl cursor-pointer"/>
+                        <label htmlFor="file" className="ml-2 text-gray-400 hover:text-gray-200 cursor-pointer">
+                            <MdAttachment className="text-3xl"/>
                         </label>
                         <input
                             type="file"
@@ -601,6 +598,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                             hidden
                             onChange={handleFileUpload}
                         />
+                        <button type="submit" className="ml-2 text-gray-400 hover:text-gray-200">
+                            <IoMdSend className="text-3xl"/>
+                        </button>
                     </form>
                 </div>
             </div>

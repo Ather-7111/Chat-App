@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { useEffect, useState } from "react";
 import "./style.css";
@@ -18,7 +18,7 @@ export default function ChatPage() {
   const [activeChat, setActiveChat] = useState(null);
   const [notifyText, setNotifyText] = useState("");
   const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
+  const [filePreview, setFilePreview] = useState(null)
 
   const loggedInUserId = localStorage.getItem("userId");
   const loggedInUserName = localStorage.getItem("userName");
@@ -48,11 +48,6 @@ export default function ChatPage() {
           ...prev,
           [senderId]: (prev[senderId] || 0) + 1,
         }));
-
-        // setNotifyText((prev) => ({
-        //   ...prev,
-        //   [senderId]: (prev[senderId] || 0) + 1,
-        // }));
       }
 
       addNotification({
@@ -89,8 +84,8 @@ export default function ChatPage() {
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
     setChat("");
-    setFile(null)
-    setFilePreview(null)
+    setFile(null); // Reset file state
+    setFilePreview(null); // Reset filePreview state
     const chat = await createChat({
       name: "Discussion",
       user1ID: loggedInUserId,
@@ -98,7 +93,6 @@ export default function ChatPage() {
     });
     setChat(chat);
     setActiveChat(chat);
-
 
     if (socket) {
       socket.emit("joinRoom", chat.id);
@@ -110,81 +104,67 @@ export default function ChatPage() {
       ...prev,
       [user.id]: 0,
     }));
-
-    // Clear the notification text
-    // setNotifyText((prev) => ({
-    //   ...prev,
-    //   [user.id]: 0,
-    // }));
   };
 
   return (
-    <div className="container">
-      <div className="row clearfix">
-        <div className="col-lg-12">
-          <div className="card chat-app h-[100vh]">
-            <div id="plist" className="people-list h-[100vh]">
-              <p>{loggedInUserName}</p>
-              <div className="input-group">
-                <div className="input-group-prepend">
-                  <span className="input-group-text">
-                    <i className="fa fa-search"></i>
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  className="w-full border border-gray-400 p-3"
-                  placeholder="Search..."
-                />
-              </div>
-
-              <ul className="list-unstyled chat-list mt-2 mb-0">
-                {allParticipants.map((user) => {
-                  const { id, name } = user;
-                  const notificationCount = notifications[id] || 0;
-                  return (
-                    <li
-                        id='id'
-                      className="clearfix border-b-2  flex"
-                      onClick={() => handleSelectUser(user)}
+      <div className="flex h-screen bg-gray-900 text-white">
+        <div className="w-1/4 bg-gray-800 border-r border-gray-700 p-4">
+          <div className="mb-4">
+            <p className="text-2xl font-semibold">{loggedInUserName}</p>
+          </div>
+          <div className="relative mb-4">
+            <input
+                type="text"
+                className="w-full border-2 border-gray-600 bg-gray-700 p-2 rounded-lg text-white"
+                placeholder="Search..."
+            />
+            <span className="absolute top-1/2 right-3 transform -translate-y-1/2">
+            <i className="fa fa-search text-gray-400"></i>
+          </span>
+          </div>
+          <ul className="space-y-2">
+            {allParticipants.map((user) => {
+              const { id, name } = user;
+              const notificationCount = notifications[id] || 0;
+              return (
+                  <li
                       key={id}
-                    >
-                      <img
+                      className="flex items-center p-2 rounded-lg hover:bg-gray-700 cursor-pointer"
+                      onClick={() => handleSelectUser(user)}
+                  >
+                    <img
+                        className="w-10 h-10 rounded-full mr-3"
                         src="https://bootdey.com/img/Content/avatar/avatar1.png"
                         alt="avatar"
-                      />
-                      <div className="about w-full flex items-center">
-                        <div className="name flex justify-between gap-4 w-full">
-                          <div className="flex flex-col">
-                            <p className="text-lg">{name}</p>
-                          </div>
-                          {notificationCount > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-gray-500/10">
-                              {notificationCount}
-                            </span>
-                          )}
-                        </div>
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <p className="text-lg">{name}</p>
+                        {notificationCount > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                        {notificationCount}
+                      </span>
+                        )}
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            {selectedUser && (
+                    </div>
+                  </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div className="flex-1">
+          {selectedUser && (
               <SingleChatPage
-                selectedUser={selectedUser}
-                chat={chat}
-                socket={socket}
-                file={file}
-                setFile={setFile}
-                filePreview={filePreview}
-                setFilePreview={setFilePreview}
+                  selectedUser={selectedUser}
+                  chat={chat}
+                  socket={socket}
+                  file={file}
+                  setFile={setFile}
+                  filePreview={filePreview}
+                  setFilePreview={setFilePreview}
               />
-            )}
-          </div>
+          )}
         </div>
       </div>
-    </div>
   );
 }

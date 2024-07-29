@@ -415,7 +415,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                         if (attachmentUrl.endsWith(fileType.extension)) {
                                                                                             return (
                                                                                                 <div key={fileType.title}
-                                                                                                     className="flex flex-col">
+                                                                                                     className="flex flex-col my-2">
                                                                                                     <div
                                                                                                         className="attachment-thumbnail"
                                                                                                         style={{
