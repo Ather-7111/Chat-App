@@ -17,7 +17,8 @@ export default function ChatPage() {
   const [notifications, setNotifications] = useState({});
   const [activeChat, setActiveChat] = useState(null);
   const [notifyText, setNotifyText] = useState("");
-  const [file , setFile] = useState(null)
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
 
   const loggedInUserId = localStorage.getItem("userId");
   const loggedInUserName = localStorage.getItem("userName");
@@ -88,6 +89,8 @@ export default function ChatPage() {
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
     setChat("");
+    setFile(null)
+    setFilePreview(null)
     const chat = await createChat({
       name: "Discussion",
       user1ID: loggedInUserId,
@@ -141,6 +144,7 @@ export default function ChatPage() {
                   const notificationCount = notifications[id] || 0;
                   return (
                     <li
+                        id='id'
                       className="clearfix border-b-2  flex"
                       onClick={() => handleSelectUser(user)}
                       key={id}
@@ -172,6 +176,10 @@ export default function ChatPage() {
                 selectedUser={selectedUser}
                 chat={chat}
                 socket={socket}
+                file={file}
+                setFile={setFile}
+                filePreview={filePreview}
+                setFilePreview={setFilePreview}
               />
             )}
           </div>

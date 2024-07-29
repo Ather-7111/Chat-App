@@ -10,11 +10,9 @@ import "yet-another-react-lightbox/styles.css";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/css/image-gallery.css";
 
-export default function SingleChatPage({selectedUser, chat, socket}) {
+export default function SingleChatPage({selectedUser, chat, socket, file, setFile, filePreview, setFilePreview}) {
     const [inbox, setInbox] = useState([]);
     const [message, setMessage] = useState("");
-    const [file, setFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
     const chatHistoryRef = useRef(null);
     const [filePreviewUrl, setFilePreviewUrl] = useState("");
     const [ext, setExt] = useState("");
@@ -192,7 +190,8 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
         }
 
         const newMessages = [];
-
+        let g = document.getElementById('id')
+        console.log("hijra", g, selectedUser)
         if (file && file.length > 0) {
             for (let i = 0; i < file.length; i++) {
                 const currentFile = file[i];
@@ -253,6 +252,9 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
 
             socket.emit("message", newMessage);
         }
+
+        // g.click()
+
     };
 
     useEffect(() => {
@@ -328,16 +330,15 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                 <ul className="m-b-0">
                     {inbox.map((message, index) => {
 
-                        console.log("message-->", message)
-                        // console.log("message -----", message)
-                        console.log("LU-->", loggedInUserId)
-                        console.log("senderId", message?.senderId)
+                        console.log("message-->", message);
+                        console.log("LU-->", loggedInUserId);
+                        console.log("senderId", message?.senderId);
 
-                        const isSentByCurrentUser = message?.senderId === loggedInUserId
-                        console.log("isSentByCurrentUser", isSentByCurrentUser)
+                        const isSentByCurrentUser = message?.senderId === loggedInUserId;
+                        console.log("isSentByCurrentUser", isSentByCurrentUser);
 
                         const isReceiver = message.senderId !== loggedInUserId;
-                        console.log("isReceiver", isReceiver)
+                        console.log("isReceiver", isReceiver);
 
                         const containerClass = isReceiver
                             ? "flex justify-start mb-2"
@@ -350,7 +351,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                         const messageClass = isReceiver
                             ? "flex flex-col items-start"
                             : "flex flex-col items-end";
-
 
                         const fileType = message.attachment
                             ? message.attachment.url.split(".").pop()
@@ -371,7 +371,6 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                 },
                             ];
 
-
                         return (
                             <li className={containerClass} key={index}>
                                 <div className={messageClass}>
@@ -380,53 +379,94 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                     {message?.text && message?.text !== "" ? (
                                         <div className={bubbleClass}>
                                             <div className="message-data">
-                                                 <span className="message-data-time">
-                                                     {formatDate(message.createdAt)}
-                                                </span>
+                            <span className="message-data-time">
+                                {formatDate(message.createdAt)}
+                            </span>
                                             </div>
                                             {message.text}
                                         </div>
                                     ) : (
-                                        // For image attachments
                                         <>
+                                            {/* For images display */}
                                             {
-                                                (message?.attachments || message?.attachmentUrl || message?.attachment?.url) && (
+                                                (message?.attachments || message?.attachmentUrl ||
+                                                    message?.attachment?.url) && (
                                                     <div>
-                                                        {message?.attachments && message.attachments.length >= 1 ? (
-                                                            <div className="flex flex-wrap w-[486px]">
-                                                                {message.attachments.map((attachment, index) => {
-
+                                                        {message.attachments && message.attachments.length >= 1 ? (
+                                                            <div className={`flex flex-wrap w-[496px] 
+                                                                    ${(message?.senderId === loggedInUserId) ? 'flex justify-end' : 'flex justify-start'}`}>
+                                                                {message.attachments.slice(0, 4).map((attachment, index) => {
                                                                     const attachmentUrl = attachment?.url || attachment?.attachmentUrl?.url;
                                                                     return (
                                                                         <div
                                                                             key={attachmentUrl}
                                                                             className="grid-item attachment border"
-                                                                            onClick={() => handleImageClick(attachment, index, message?.id)}
                                                                         >
-                                                                            {isImageFile(attachmentUrl) && (
-                                                                                <>
-                                                                                    <p>heyyyyiii</p>
+                                                                            {isImage(attachmentUrl) ? (
+                                                                                <div>
                                                                                     <img
                                                                                         src={attachmentUrl}
                                                                                         alt="attachment123"
                                                                                         className="w-[240px] h-[200px] rounded-lg cursor-pointer"
+                                                                                        onClick={() => handleImageClick(attachment, index, message?.id)}
                                                                                     />
-                                                                                </>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="shadow-lg w-[496px]">
+                                                                                    {fileTypes.map((fileType) => {
+                                                                                        if (attachmentUrl.endsWith(fileType.extension)) {
+                                                                                            return (
+                                                                                                <div key={fileType.title}
+                                                                                                     className="flex flex-col">
+                                                                                                    <div
+                                                                                                        className="attachment-thumbnail"
+                                                                                                        style={{
+                                                                                                            backgroundImage: `url(${fileType.background})`,
+                                                                                                            backgroundSize: "cover",
+                                                                                                            width: "496px",
+                                                                                                            height: "200px",
+                                                                                                            borderRadius: "8px",
+                                                                                                            backgroundColor: "#f8f9fa",
+                                                                                                        }}
+                                                                                                    ></div>
+                                                                                                    <div
+                                                                                                        className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
+                                                                                                        <div>{fileType.icon}</div>
+                                                                                                        <p className="black hover:underline mt-2">
+                                                                                                            {fileType.title || "View File"}
+                                                                                                        </p>
+                                                                                                        <a
+                                                                                                            href={message?.attachmentUrl ||
+                                                                                                                (message?.attachment?.url || message?.attachmentUrl?.url)}
+                                                                                                            target="_blank"
+                                                                                                            download
+                                                                                                            className="flex items-center text-black hover:underline mt-1"
+                                                                                                        >
+                                                                                                            <IoMdDownload
+                                                                                                                className="mr-1"/>
+                                                                                                        </a>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            );
+                                                                                        }
+                                                                                        return null;
+                                                                                    })}
+                                                                                </div>
                                                                             )}
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
                                                         ) : (
-                                                            <div className="attachment flex">
+                                                            // to show attachments on sender node in runtime
+                                                            <div className="flex">
                                                                 {isImage(message?.attachmentUrl || message?.attachment?.url) ? (
-                                                                    <div className="image-preview mt-2">
-                                                                        <p>heyy</p>
+                                                                    <div
+                                                                        className="image-preview mt-2">
                                                                         <img
                                                                             src={
                                                                                 message?.attachmentUrl?.startsWith('data:image')
-                                                                                    ? (message?.attachmentUrl || message?.attachment?.url)
-                                                                                    : (message?.attachment?.url || message?.attachmentUrl)
+                                                                                    ? message?.attachmentUrl : message?.attachment?.url
                                                                             }
                                                                             alt="attachment12"
                                                                             className="w-[240px] h-[200px] rounded-lg"
@@ -434,18 +474,59 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        {
-                                                                            <div>
-                                                                                <img
-                                                                                    src={message?.attachmentUrl?.url}
-                                                                                    alt="attachment1"
-                                                                                    className="w-[240px] h-[200px] rounded-lg"
-                                                                                />
-                                                                            </div>
-                                                                        }
+                                                                        <div className="w-[496px] border border-yellow-600">
+                                                                            {fileTypes.map((fileType) => {
+                                                                                const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
+                                                                                const isSenderUrlExists = fileAttachmentUrl?.startsWith(`data:${fileType.filetype}`)
+                                                                                const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileType.extension)
+                                                                                const isFileTypeMatches = fileAttachmentUrl.includes(fileType?.extension || fileType?.filetype)
+
+                                                                                console.log("isMatched--->", isFileTypeMatches)
+
+                                                                                console.log("fileAttachmentUrl", fileAttachmentUrl)
+                                                                                console.log("isSenderURLExists", isSenderUrlExists)
+                                                                                console.log("isSenderURLExists", isReceiverUrlExists)
+
+                                                                                if (isSenderUrlExists || isReceiverUrlExists) {
+                                                                                    return (
+                                                                                        <div key={fileType.extension}
+                                                                                             className="flex flex-col">
+                                                                                            <div
+                                                                                                className="attachment-thumbnail"
+                                                                                                style={{
+                                                                                                    backgroundImage: `url(${fileType.background})`,
+                                                                                                    backgroundSize: "cover",
+                                                                                                    width: "496px",
+                                                                                                    height: "200px",
+                                                                                                    borderRadius: "8px",
+                                                                                                    backgroundColor: "#f8f9fa",
+                                                                                                }}
+                                                                                            ></div>
+                                                                                            <div
+                                                                                                className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2
+                                                                                            rounded-b-xl">
+                                                                                                <div>{fileType.icon}</div>
+                                                                                                <p className="text-black hover:underline mt-2">
+                                                                                                    {fileType.title || "View File"}
+                                                                                                </p>
+                                                                                                <a
+                                                                                                    href={message?.attachmentUrl || message?.attachment?.url}
+                                                                                                    target="_blank"
+                                                                                                    download
+                                                                                                    className="flex items-center text-black hover:underline "
+                                                                                                >
+                                                                                                    <IoMdDownload
+                                                                                                        className="mr-1"/>
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                }
+                                                                                return null;
+                                                                            })}
+                                                                        </div>
                                                                     </>
                                                                 )}
-
                                                             </div>
                                                         )}
                                                     </div>
@@ -454,179 +535,11 @@ export default function SingleChatPage({selectedUser, chat, socket}) {
                                         </>
                                     )}
 
-
-                                    {/*--------------------For file attachments---------------*/}
-
-
-                                    {(message?.attachments ||
-                                        (message?.attachmentUrl ||
-                                            (message?.attachment?.url || message?.attachmentUrl?.url))) && (
-                                        <div>
-                                            {message?.text === "" && message?.attachments && message?.attachments.length >= 1 ? (
-                                                message.attachments.map((attachment) => (
-
-                                                    <div key={attachment?.url} className="attachment-info">
-                                                        {fileTypes.map((fileType) => {
-
-                                                            const isSender = message.senderId === loggedInUserId;
-                                                            console.log("isSenderM", isSender)
-
-                                                            const attachmentUrl = isSender
-                                                                ? (attachment?.url || message?.attachmentUrl)
-                                                                : (attachment?.url || (attachment?.attachmentUrl?.url || message?.attachmentUrl?.url));
-
-                                                            console.log("attachmentUrl in DB---->", attachmentUrl)
-
-                                                            const isMatchingType =
-                                                                typeof attachmentUrl === 'string' &&
-                                                                !isImageFile(attachmentUrl) &&
-                                                                (attachmentUrl.endsWith(`.${fileType.extension}`) ||
-                                                                    attachmentUrl.startsWith(`data:${fileType.filetype}`));
-
-
-                                                            if (isMatchingType) {
-                                                                const {
-                                                                    background,
-                                                                    extension,
-                                                                    title,
-                                                                    icon
-                                                                } = fileType;
-
-                                                                return (
-                                                                    <div key={extension} className="flex flex-col">
-                                                                        <div
-                                                                            className="attachment-thumbnail"
-                                                                            style={{
-                                                                                backgroundImage: `url(${background})`,
-                                                                                backgroundSize: "cover",
-                                                                                width: "350px",
-                                                                                height: "200px",
-                                                                                borderRadius: "8px",
-                                                                                backgroundColor: "#f8f9fa",
-                                                                            }}
-                                                                        ></div>
-                                                                        <div
-                                                                            className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
-                                                                            <div>{icon}</div>
-                                                                            <p className="text-black hover:underline mt-2">
-                                                                                {title || "View File"}
-                                                                            </p>
-                                                                            <a
-                                                                                href={(message?.attachmentUrl || message?.attachmentUrl?.url) || attachment?.url}
-                                                                                target="_blank"
-                                                                                download
-                                                                                className="flex items-center text-black hover:underline mt-1"
-                                                                            >
-                                                                                <IoMdDownload className="mr-1"/>
-                                                                            </a>
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            }
-
-                                                            return null;
-                                                        })}
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div>
-                                                    {(message?.attachmentUrl ||
-                                                            (message?.attachment?.url || message?.attachmentUrl?.url))
-                                                        && (
-                                                            <div
-                                                                key={message?.attachmentUrl ||
-                                                                    (message?.attachment?.url || message?.attachmentUrl?.url)}
-                                                                className="attachment-info">
-                                                                {fileTypes.map((fileType) => {
-                                                                    const isSender = message.senderId === loggedInUserId;
-                                                                    // console.log("isSenderS", isSender)
-
-                                                                    const attachmentUrl = isSender ?
-                                                                        // message?.attachmentUrl : (message?.attachment?.url)
-                                                                        (message?.attachmentUrl?.url || message?.attachmentUrl) :
-                                                                        (message?.attachment?.url)
-
-                                                                    console.log("attachmentUrl in State---->", attachmentUrl)
-
-                                                                    // For both single & multiple attachment this works for sender
-                                                                    console.log("message?.attachmentUrl", message?.attachmentUrl)
-
-                                                                    // For single attachment this works for receiver
-                                                                    console.log("message?.attachment?.url", message?.attachment?.url)
-
-                                                                    console.log("message?.attachmentUrl?.url", message?.attachmentUrl?.url)
-
-                                                                    const isMatchingType =
-                                                                        typeof attachmentUrl === 'string' &&
-                                                                        !isImageFile(attachmentUrl) &&
-                                                                        (attachmentUrl.endsWith(`.${fileType.extension}`) ||
-                                                                            attachmentUrl.startsWith(`data:${fileType.filetype}`));
-
-                                                                    // console.log("isMatchingFileState", isMatchingType)
-
-                                                                    if (isMatchingType) {
-                                                                        const {
-                                                                            background,
-                                                                            extension,
-                                                                            title,
-                                                                            icon
-                                                                        } = fileType;
-
-
-                                                                        return (
-                                                                            <div key={title}
-                                                                                 className="flex flex-col">
-                                                                                <div
-                                                                                    className="attachment-thumbnail"
-                                                                                    style={{
-                                                                                        backgroundImage: `url(${background})`,
-                                                                                        backgroundSize: "cover",
-                                                                                        width: "350px",
-                                                                                        height: "200px",
-                                                                                        borderRadius: "8px",
-                                                                                        backgroundColor: "#f8f9fa",
-                                                                                    }}
-                                                                                ></div>
-                                                                                <div
-                                                                                    className="flex justify-between shadow-lg shadow-slate-300 py-5 px-2 rounded-b-xl">
-                                                                                    <div>{icon}</div>
-                                                                                    <p className="text-black hover:underline mt-2">
-                                                                                        {title || "View File"}
-                                                                                    </p>
-                                                                                    <a
-                                                                                        href={message?.attachmentUrl ||
-                                                                                            (message?.attachment?.url || message?.attachmentUrl?.url)}
-                                                                                        target="_blank"
-                                                                                        download
-                                                                                        className="flex items-center text-black hover:underline mt-1"
-                                                                                    >
-                                                                                        <IoMdDownload className="mr-1"/>
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    }
-
-                                                                    return null;
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    {/*-----------------------------------*/}
-
-
-                                    <small className="flex justify-end mt-3">
-                                        {formatDate(message?.createdAt ||
-                                            message?.message?.createdAt)}
-                                    </small>
                                 </div>
                             </li>
                         )
-                            ;
                     })}
+
                 </ul>
             </div>
 
