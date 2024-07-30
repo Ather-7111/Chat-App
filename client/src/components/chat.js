@@ -7,9 +7,9 @@ import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgIds} from "@/lib/actions/attachement";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/css/image-gallery.css";
 import {Oval} from "react-loader-spinner";
+import {FileIcon} from "react-file-icon"
 
 export default function SingleChatPage({selectedUser, chat, socket, file, setFile, filePreview, setFilePreview}) {
     const [inbox, setInbox] = useState([]);
@@ -23,6 +23,15 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
     const [messageId, setMessageId] = useState('')
     const [selectedImages, setSelectedImages] = useState([])
     const [loading, setLoading] = useState(false)
+
+    const [loadIndex, setLoadIndex] = useState(1)
+    const [chatId, setChatId] = useState('')
+
+    const [isLoading, setIsLoading] = useState(false)
+    const [displayedMessages, setDisplayedMessages] = useState([]);
+    const [hasMore, setHasMore] = useState(false);
+    const [scrollIndex, setScrollIndex] = useState(0);
+    const [messagesLength, setMessagesLength] = useState('')
 
 
     const loggedInUserId = localStorage.getItem("userId");
@@ -80,7 +89,6 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                         attachments: message.attachments
                     };
                     setInbox((prevInbox) => [...prevInbox, messageWithAttachments]);
-
                 }
             })
 
@@ -110,17 +118,27 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
         }
     }, [inbox]);
 
-    const loadMessages = async () => {
+
+    const loadMessages = async (count) => {
+
         try {
             const chat = await getChat(loggedInUserId, selectedUser.id);
 
-            const allMessages = await getAllMessages(
+            let allMessages = await getAllMessages(
                 loggedInUserId,
                 selectedUser.id,
                 chat.id,
-            );
+                loadIndex
+            )
 
-            console.log("hellllllo ather", allMessages);
+            setChatId(chat.id)
+
+            const allMessagesLength = allMessages[0].allMessagesLength
+            console.log("allMsgsLength", allMessagesLength)
+            setMessagesLength(allMessagesLength)
+
+
+            console.log("all messages--->", allMessages);
 
             // Extract message IDs for attachment messages
             const messageIds = allMessages
@@ -151,6 +169,10 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                 combinedMessages
             );
             setInbox(combinedMessages);
+
+            // setDisplayedMessages(combinedMessages);
+            // setScrollIndex(combinedMessages.length - 1);
+            // setIsLoading(false);
 
             // Scroll to the bottom when messages are loaded
             if (chatHistoryRef.current) {
@@ -187,10 +209,31 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
         const newMessages = [];
         let g = document.getElementById('id')
-        console.log("hijra", g, selectedUser)
+        console.log("g->", g, selectedUser)
         if (file && file.length > 0) {
             for (let i = 0; i < file.length; i++) {
                 const currentFile = file[i];
+
+                /*const fileBuffer = await currentFile.arrayBuffer();
+
+                const type = fileType(fileBuffer)
+                console.log("type-->" , type)
+
+                if (type) {
+                    const newMessage = {
+                        filetype: type.mime,
+                        senderId: loggedInUserId,
+                        receiverId: selectedUser.id,
+                        text: message,
+                        createdAt: new Date().toISOString(),
+                        chatId: chat.id,
+                        attachmentUrl,
+                    };
+                } else {
+                    console.log('Unknown file type');
+                }*/
+
+
                 const readFile = (file) => {
                     return new Promise((resolve, reject) => {
                         const fileReader = new FileReader();
@@ -207,6 +250,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                             };
                             resolve(newMessage);
                         };
+
+                        console.log("fileReader--->", fileReader)
+
                         fileReader.onerror = reject;
                         fileReader.readAsDataURL(file);
                     });
@@ -295,9 +341,46 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
         const imageExtensionsPattern = /\.(png|jpe?g|gif|bmp|webp|svg)$/i;
         return inlineImagePattern.test(url) || imageExtensionsPattern.test(url);
     };
+
     const attachmentUrl = (message?.attachment?.url || message?.attachmentUrl?.url) || message?.attachmentUrl;
 
-    const attachmentPreview = fileTypes.map((fileType) => fileType.background)
+
+    async function handleLoadPreviousMessages() {
+        setLoadIndex(loadIndex + 1)
+
+        let receivedMsgs = await getAllMessages(
+            loggedInUserId,
+            selectedUser.id,
+            chatId,
+            loadIndex
+        )
+
+        console.log("receivedMsgs" , receivedMsgs)
+    }
+
+    useEffect(() => {
+        console.log("loadIndex-->", loadIndex)
+    }, [loadIndex]);
+
+
+    useEffect(() => {
+        const chatHistoryElement = chatHistoryRef.current;
+        const handleScroll = () => {
+            console.log('scrollTop:', chatHistoryElement.scrollTop);
+            if (chatHistoryElement.scrollTop > -2500.25 || chatHistoryElement.scrollTop < -5806.25) {
+                if (messagesLength > inbox.length) {
+                    setHasMore(true)
+                }
+                console.log("hasMore", hasMore)
+            }
+        };
+        chatHistoryElement.addEventListener('scroll', handleScroll);
+
+        // Cleanup on component unmount
+        return () => {
+            chatHistoryElement.removeEventListener('scroll', handleScroll);
+        };
+    }, [inbox]);
 
 
     return (
@@ -318,6 +401,17 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                     </div>
                 </div>
             </div>
+
+            {/*Load Previous Msgs Btn*/}
+            {
+                hasMore ? <div className="flex items-center justify-center ">
+                    <button className="bg-gray-500 text-white px-3 py-2 my-2 text-xs rounded-2xl"
+                            onClick={handleLoadPreviousMessages}
+                    >
+                        Load previous messages...
+                    </button>
+                </div> : ""
+            }
 
             <div
                 className="chat-history flex-grow flex flex-col-reverse overflow-y-auto p-4"
@@ -368,8 +462,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
                         return (
                             <li className={containerClass} key={index}>
-                                <div className={messageClass}>
 
+
+                                <div className={messageClass}>
                                     {/* For text */}
                                     {message?.text && message?.text !== "" ? (
                                         <div className={bubbleClass}>
@@ -390,8 +485,18 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                         {message.attachments && message.attachments.length >= 1 ? (
                                                             <div className={`flex flex-wrap w-[496px] 
                                                                     ${(message?.senderId === loggedInUserId) ? 'flex justify-end' : 'flex justify-start'}`}>
-                                                                {message.attachments.slice(0,4).map((attachment, index) => {
+                                                                {message.attachments.map((attachment, index) => {
                                                                     const attachmentUrl = attachment?.url || attachment?.attachmentUrl?.url;
+                                                                    // const type = fileType(attachmentUrl);
+                                                                    // console.log("type------->" , type)
+
+                                                                    const fileType = attachmentUrl.split('.').pop();
+                                                                    const fileIcon = <FileIcon extension={fileType}
+                                                                                               size={24}/>;
+
+                                                                    console.log("fileType-->", fileType)
+                                                                    console.log("fileIcon -->", fileIcon)
+
                                                                     return (
                                                                         <div
                                                                             key={attachmentUrl}
@@ -411,8 +516,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                     {fileTypes.map((fileType) => {
                                                                                         if (attachmentUrl.endsWith(fileType.extension)) {
                                                                                             return (
-                                                                                                <div key={fileType.title}
-                                                                                                     className="flex flex-col">
+                                                                                                <div
+                                                                                                    key={fileType.title}
+                                                                                                    className="flex flex-col">
                                                                                                     <div
                                                                                                         className="attachment-thumbnail rounded-t-xl"
                                                                                                         style={{
@@ -508,6 +614,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
                                                                                             // console.log("isMatched--->", isFileTypeMatches)
 
+                                                                                            const mimeType = fileAttachmentUrl.type;
+                                                                                            console.log("mimeType-->", mimeType)
+
                                                                                             console.log("fileAttachmentUrl", fileAttachmentUrl)
                                                                                             console.log("isSenderURLExists", isSenderUrlExists)
                                                                                             console.log("isSenderURLExists", isReceiverUrlExists)
@@ -572,6 +681,8 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                             // const isFileTypeMatches = fileAttachmentUrl.includes(fileType?.extension || fileType?.filetype)
 
                                                                                             // console.log("isMatched--->", isFileTypeMatches)
+                                                                                            const mimeType = fileAttachmentUrl.type;
+                                                                                            console.log("mimeType-->", mimeType)
 
                                                                                             console.log("fileAttachmentUrl", fileAttachmentUrl)
                                                                                             console.log("isSenderURLExists", isSenderUrlExists)
@@ -625,8 +736,6 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                     </div>
                                                 )
                                             }
-
-
                                         </>
                                     )}
 
@@ -648,16 +757,16 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                 <Lightbox
                     open={lightboxOpen}
                     close={() => setLightboxOpen(false)}
-                    slides={selectedImages.map((image) => ({
-                        src: image.url,
+                    slides={selectedImages?.map((image) => ({
+                        src: image?.url,
                     }))}
                 />
             )}
 
-            {/*--------------------------------------*/}
+            {/*-------------------------------------------------------------*/}
 
 
-            {/* For images preview before sending */}
+            {/*------------ For images preview before sending ----------------*/}
 
             {filePreview && (
                 <div className="p-4 flex flex-wrap">
@@ -665,7 +774,6 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                         <img
                             key={index}
                             src={preview}
-                            alt={''}
                             className="w-12 h-12 object-cover mr-1"
                         />
                     ))}
