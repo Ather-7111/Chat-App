@@ -184,8 +184,9 @@ exports.createMultipleMessages = async function (messageCreate) {
       const uploadResult = await cloudinary.uploader.upload(mime, {
         format: getformat(filetype),
         resource_type: "auto",
+        
       });
-
+    cloudinary.uploader.upload("",{})
       // console.log("sigma", uploadResult);
       const attachment = await prisma.attachment.create({
         data: {

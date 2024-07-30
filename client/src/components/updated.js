@@ -303,6 +303,21 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
                     </div>
                   )}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                   {(message?.attachment || message?.attachmentUrl) && (
                     <div className="attachment">
                       <div className="attachment-preview flex justify-end">
@@ -391,6 +406,16 @@ export default function SingleChatPage({ selectedUser, chat, socket }) {
             <IoMdSend />
           </button>
         </form>
+
+
+
+
+
+
+
+
+
+        
         {filePreview &&
           filePreview.map((previewUrl, index) => (
             <div
