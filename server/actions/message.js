@@ -186,8 +186,7 @@ exports.createMultipleMessages = async function (messageCreate) {
         resource_type: "auto",
         
       });
-    cloudinary.uploader.upload("",{})
-      // console.log("sigma", uploadResult);
+  
       const attachment = await prisma.attachment.create({
         data: {
           url: uploadResult.secure_url,
