@@ -347,20 +347,20 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
     async function handleLoadPreviousMessages() {
         setLoadIndex(loadIndex + 1)
-
-        let receivedMsgs = await getAllMessages(
+        let remainingMsgs = await getAllMessages(
             loggedInUserId,
             selectedUser.id,
             chatId,
             loadIndex
         )
-
-        console.log("receivedMsgs" , receivedMsgs)
+        setInbox((prevInbox) => [...prevInbox, ...remainingMsgs]);
+        console.log("remainingMessages" , remainingMsgs)
     }
 
     useEffect(() => {
         console.log("loadIndex-->", loadIndex)
-    }, [loadIndex]);
+        console.log("updatedInbox" , inbox)
+    }, [loadIndex , inbox]);
 
 
     useEffect(() => {
