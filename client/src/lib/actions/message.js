@@ -3,11 +3,18 @@ import {connect} from "../db";
 
 export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
     try {
-        console.log("hijra", userId, otherUserId, chatId, loadIndex);
+        console.log("loadIndex", loadIndex);
         let prisma = await connect();
         const allMessagesLength = await prisma.message.count();
 
-        console.log("hijra6", allMessagesLength - (15 * loadIndex) < 0);
+        console.log("skip-->", allMessagesLength - (15 * loadIndex));
+        const skipExpression = allMessagesLength - (15 * loadIndex);
+        const skipValue = (skipExpression < 0) ? 0 : skipExpression;
+        let takeValue = ((skipExpression < 0) ? (skipExpression + 15) : 15)
+        let maxLoadIndex = (Math.round(allMessagesLength / 15)) + 1
+        if (loadIndex > maxLoadIndex) {
+            takeValue = 0
+        }
         const messages = await prisma.message.findMany({
             where: {
                 chatId: chatId,
@@ -22,23 +29,23 @@ export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
                     },
                 ],
             },
-            skip: (allMessagesLength - (15 * loadIndex) < 0) ? 0 : allMessagesLength - (15 * loadIndex),
-            take:(allMessagesLength - (15 * loadIndex) < 0) ? ((allMessagesLength - (15 * loadIndex))+15)  : 15,
-            // limit:15,
+            skip: skipValue,
+            take: takeValue,
+            // limit:15,                  || skipExpression <-15 ? 0 :15
             include: {
                 sender: true,
                 receiver: true,
             },
-            orderBy: {
-                createdAt: "asc",
-            },
+            // orderBy: {
+            //     createdAt: "asc",
+            // },
         });
         // console.log(messages.map((msg) => ({
         //   ...msg,
         //   from: msg.senderId,
         //   to: msg.receiverId,
         // })))
-        console.log("sigma-hijra", messages.length)
+        console.log("sigma-bhola", messages)
         messages.forEach((e) => {
             delete e.attachementUrl
         })

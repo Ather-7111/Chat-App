@@ -3,7 +3,7 @@ import { connect } from "../db";
 
 export async function getAllAttachmentsUsingMsgIds(messageIds) {
   try {
-    console.log("msg array:", messageIds);
+    // console.log("msg array:", messageIds);
     let prisma = await connect();
     const attachments = await prisma.attachment.findMany({
       where: {
@@ -17,7 +17,7 @@ export async function getAllAttachmentsUsingMsgIds(messageIds) {
         createdAt: "asc",
       },
     });
-    console.log("sigma,bhola", attachments, messageIds);
+    // console.log("sigma,bhola", attachments, messageIds);
     return attachments;
     // messages.map((msg) => ({
     //   ...msg,

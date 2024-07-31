@@ -27,10 +27,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
     const [loadIndex, setLoadIndex] = useState(1)
     const [chatId, setChatId] = useState('')
 
-    const [isLoading, setIsLoading] = useState(false)
-    const [displayedMessages, setDisplayedMessages] = useState([]);
-    const [hasMore, setHasMore] = useState(false);
-    const [scrollIndex, setScrollIndex] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const [messagesLength, setMessagesLength] = useState('')
 
 
@@ -133,11 +130,6 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
             setChatId(chat.id)
 
-            const allMessagesLength = allMessages[0].allMessagesLength
-            console.log("allMsgsLength", allMessagesLength)
-            setMessagesLength(allMessagesLength)
-
-
             console.log("all messages--->", allMessages);
 
             // Extract message IDs for attachment messages
@@ -169,6 +161,12 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                 combinedMessages
             );
             setInbox(combinedMessages);
+
+
+            const allMessagesLength = combinedMessages[0].allMessagesLength
+            console.log("allMsgsLength-->", allMessagesLength)
+            setMessagesLength(allMessagesLength)
+
 
             // setDisplayedMessages(combinedMessages);
             // setScrollIndex(combinedMessages.length - 1);
@@ -209,7 +207,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
         const newMessages = [];
         let g = document.getElementById('id')
-        console.log("g->", g, selectedUser)
+        // console.log("g->", g, selectedUser)
         if (file && file.length > 0) {
             for (let i = 0; i < file.length; i++) {
                 const currentFile = file[i];
@@ -346,41 +344,74 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
 
     async function handleLoadPreviousMessages() {
-        setLoadIndex(loadIndex + 1)
-        let remainingMsgs = await getAllMessages(
+        const newLoadIndex = loadIndex + 1;
+        setLoadIndex(newLoadIndex);
+
+        let allDisplayedMessages = await getAllMessages(
             loggedInUserId,
             selectedUser.id,
             chatId,
-            loadIndex
-        )
-        setInbox((prevInbox) => [...prevInbox, ...remainingMsgs]);
-        console.log("remainingMessages" , remainingMsgs)
+            newLoadIndex
+        );
+        console.log("allDisplayedMessages", allDisplayedMessages);
+
+        const messageIds = allDisplayedMessages
+            .filter((message) => !message.text)
+            .map((message) => message.id);
+
+        const attachments = await getAllAttachmentsUsingMsgIds(messageIds);
+
+        // Combine messages and attachments
+        const combinedMessages = allDisplayedMessages.map((message) => {
+            const attachmentGroup = attachments.filter(
+                (att) => att.messageId === message.id
+            );
+            return {
+                ...message,
+                attachments: attachmentGroup,
+            };
+        });
+        console.log("All updated Messages -->", combinedMessages.length, combinedMessages);
+
+        // Prepend previous messages to the existing messages
+        const newInbox = [...combinedMessages, ...inbox];
+        setInbox(newInbox);
+
+
+        if (messagesLength === combinedMessages) {
+            setHasMore(false)
+        }
+
     }
+
 
     useEffect(() => {
         console.log("loadIndex-->", loadIndex)
-        console.log("updatedInbox" , inbox)
-    }, [loadIndex , inbox]);
+        console.log("updatedInbox-->", inbox)
+    }, [loadIndex, inbox]);
 
 
     useEffect(() => {
         const chatHistoryElement = chatHistoryRef.current;
         const handleScroll = () => {
             console.log('scrollTop:', chatHistoryElement.scrollTop);
-            if (chatHistoryElement.scrollTop > -2500.25 || chatHistoryElement.scrollTop < -5806.25) {
+            const threshold = -1000;
+
+            // Check if the scroll is at the top to load more messages
+            if (chatHistoryElement.scrollTop <= threshold && hasMore) {
                 if (messagesLength > inbox.length) {
-                    setHasMore(true)
+                    setHasMore(true);
+                } else {
+                    setHasMore(false);
                 }
-                console.log("hasMore", hasMore)
             }
         };
         chatHistoryElement.addEventListener('scroll', handleScroll);
 
-        // Cleanup on component unmount
         return () => {
             chatHistoryElement.removeEventListener('scroll', handleScroll);
         };
-    }, [inbox]);
+    }, [inbox, hasMore]);
 
 
     return (
@@ -402,15 +433,15 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                 </div>
             </div>
 
-            {/*Load Previous Msgs Btn*/}
+            {/*-- Load Previous Messages Btn ---*/}
             {
-                hasMore ? <div className="flex items-center justify-center ">
+                hasMore && <div className="flex items-center justify-center ">
                     <button className="bg-gray-500 text-white px-3 py-2 my-2 text-xs rounded-2xl"
                             onClick={handleLoadPreviousMessages}
                     >
                         Load previous messages...
                     </button>
-                </div> : ""
+                </div>
             }
 
             <div
@@ -419,15 +450,15 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
             >
                 <ul className="m-b-0">
                     {inbox.map((message, index) => {
-                        console.log("message-->", message);
-                        console.log("LU-->", loggedInUserId);
-                        console.log("senderId", message?.senderId);
+                        // console.log("message-->", message);
+                        // console.log("LU-->", loggedInUserId);
+                        // console.log("senderId", message?.senderId);
 
                         const isSentByCurrentUser = message?.senderId === loggedInUserId;
-                        console.log("isSentByCurrentUser", isSentByCurrentUser);
+                        // console.log("isSentByCurrentUser", isSentByCurrentUser);
 
                         const isReceiver = message.senderId !== loggedInUserId;
-                        console.log("isReceiver", isReceiver);
+                        // console.log("isReceiver", isReceiver);
 
                         const containerClass = isReceiver
                             ? "flex justify-start mb-2"
@@ -494,8 +525,8 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                     const fileIcon = <FileIcon extension={fileType}
                                                                                                size={24}/>;
 
-                                                                    console.log("fileType-->", fileType)
-                                                                    console.log("fileIcon -->", fileIcon)
+                                                                    // console.log("fileType-->", fileType)
+                                                                    // console.log("fileIcon -->", fileIcon)
 
                                                                     return (
                                                                         <div
@@ -615,11 +646,11 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                             // console.log("isMatched--->", isFileTypeMatches)
 
                                                                                             const mimeType = fileAttachmentUrl.type;
-                                                                                            console.log("mimeType-->", mimeType)
-
-                                                                                            console.log("fileAttachmentUrl", fileAttachmentUrl)
-                                                                                            console.log("isSenderURLExists", isSenderUrlExists)
-                                                                                            console.log("isSenderURLExists", isReceiverUrlExists)
+                                                                                            // console.log("mimeType-->", mimeType)
+                                                                                            //
+                                                                                            // console.log("fileAttachmentUrl", fileAttachmentUrl)
+                                                                                            // console.log("isSenderURLExists", isSenderUrlExists)
+                                                                                            // console.log("isSenderURLExists", isReceiverUrlExists)
 
                                                                                             if (isSenderUrlExists || isReceiverUrlExists) {
                                                                                                 return (
@@ -682,11 +713,11 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
                                                                                             // console.log("isMatched--->", isFileTypeMatches)
                                                                                             const mimeType = fileAttachmentUrl.type;
-                                                                                            console.log("mimeType-->", mimeType)
-
-                                                                                            console.log("fileAttachmentUrl", fileAttachmentUrl)
-                                                                                            console.log("isSenderURLExists", isSenderUrlExists)
-                                                                                            console.log("isSenderURLExists", isReceiverUrlExists)
+                                                                                            // console.log("mimeType-->", mimeType)
+                                                                                            //
+                                                                                            // console.log("fileAttachmentUrl", fileAttachmentUrl)
+                                                                                            // console.log("isSenderURLExists", isSenderUrlExists)
+                                                                                            // console.log("isSenderURLExists", isReceiverUrlExists)
 
                                                                                             if (isSenderUrlExists || isReceiverUrlExists) {
                                                                                                 return (
