@@ -3,14 +3,16 @@ import {connect} from "../db";
 
 export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
     try {
-        console.log("loadIndex", loadIndex);
-        let prisma = await connect();
-        const allMessagesLength = await prisma.message.count();
 
-        console.log("skip-->", allMessagesLength - (15 * loadIndex));
+        let prisma = await connect();
+        let allMessagesLength = await prisma.message.findMany({where:{chatId:chatId}});
+        allMessagesLength=allMessagesLength.length;
+        console.log("loadIndex", loadIndex,"hijra",allMessagesLength);
+
         const skipExpression = allMessagesLength - (15 * loadIndex);
         const skipValue = (skipExpression < 0) ? 0 : skipExpression;
-        let takeValue = ((skipExpression < 0) ? (skipExpression + 15) : 15)
+        let takeValue = (skipExpression < 0) ? (skipExpression + 15) : 15
+        console.log("skip-->", skipValue,"takeVlaue:",takeValue);
         let maxLoadIndex = (Math.round(allMessagesLength / 15)) + 1
         if (loadIndex > maxLoadIndex) {
             takeValue = 0
@@ -45,7 +47,7 @@ export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
         //   from: msg.senderId,
         //   to: msg.receiverId,
         // })))
-        console.log("sigma-bhola", messages)
+        console.log("sigma-bhola", messages.length)
         messages.forEach((e) => {
             delete e.attachementUrl
         })

@@ -10,9 +10,23 @@ import "yet-another-react-lightbox/styles.css";
 import "react-image-gallery/styles/css/image-gallery.css";
 import {Oval} from "react-loader-spinner";
 import {FileIcon, defaultStyles} from "react-file-icon"
+import InputForm from "@/components/InputForm/inputForm";
+import RuntimeAttachmentsOnSender from "@/components/RuntimeAttachmentsOnSender/runtimeAttachmentsOnSender";
+import {debounce} from "next/dist/server/utils";
 
 
-export default function SingleChatPage({selectedUser, chat, socket, file, setFile, filePreview, setFilePreview}) {
+export default function SingleChatPage({
+                                           selectedUser,
+                                           chat,
+                                           socket,
+                                           file,
+                                           setFile,
+                                           filePreview,
+                                           setFilePreview,
+                                           fileInputRef,
+                                           hasMore,
+                                           setHasMore
+                                       }) {
     const [inbox, setInbox] = useState([]);
     const [message, setMessage] = useState("");
     const chatHistoryRef = useRef(null);
@@ -24,7 +38,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
     const [messageId, setMessageId] = useState('')
     const [selectedImages, setSelectedImages] = useState([])
     const [loading, setLoading] = useState(false)
-    const [hasMore, setHasMore] = useState(true);
+    // const [hasMore, setHasMore] = useState(true);
 
 
     const [loadIndex, setLoadIndex] = useState(1)
@@ -38,29 +52,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
 
     const fileTypes = [
-        {
-            extension: "pdf",
-            icon: <FaFilePdf/>,
-            background: "https://ja.nsommer.dk/img/pdf.jpg",
-            title: "View PDF Attachment",
-            filetype: "application/pdf",
-        },
-        {
-            extension: "ppt",
-            icon: <FaFilePowerpoint/>,
-            background:
-                "https://kayaconnect.org/pluginfile.php/383349/course/overviewfiles/powerpoint.png",
-            title: "View PPT Attachment",
-            filetype: "application/vnd.ms-powerpoint",
-        },
-        {
-            extension: "doc",
-            icon: <FaFileWord/>,
-            background:
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaaT53qepmWven1TGX8jrjQxnmwcm4ynllyQ&s",
-            title: "View DOC Attachment",
-            filetype: "application/msword",
-        },
+        {id: '1'}
     ];
 
     useEffect(() => {
@@ -166,13 +158,9 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
 
             const allMessagesLength = combinedMessages[0].allMessagesLength
-            console.log("allMsgsLength-->", allMessagesLength)
+            console.log("allMessagesLength-->", allMessagesLength)
             setMessagesLength(allMessagesLength)
 
-
-            // setDisplayedMessages(combinedMessages);
-            // setScrollIndex(combinedMessages.length - 1);
-            // setIsLoading(false);
 
             // Scroll to the bottom when messages are loaded
             if (chatHistoryRef.current) {
@@ -198,11 +186,12 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
         setFilePreview(previews);
     };
 
+
     const handleSendMessage = async (event) => {
         event.preventDefault();
 
         setLoading(true)
-        setFile(null);
+        setFile([]);
         setFilePreview(null);
 
         if (!message.trim() && (!file || file.length === 0)) {
@@ -211,34 +200,16 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
         const newMessages = [];
         let g = document.getElementById('id')
-        // console.log("g->", g, selectedUser)
+        console.log("g->", g, selectedUser)
         if (file && file.length > 0) {
             for (let i = 0; i < file.length; i++) {
                 const currentFile = file[i];
-
-                /*const fileBuffer = await currentFile.arrayBuffer();
-
-                const type = fileType(fileBuffer)
-                console.log("type-->" , type)
-
-                if (type) {
-                    const newMessage = {
-                        filetype: type.mime,
-                        senderId: loggedInUserId,
-                        receiverId: selectedUser.id,
-                        text: message,
-                        createdAt: new Date().toISOString(),
-                        chatId: chat.id,
-                        attachmentUrl,
-                    };
-                } else {
-                    console.log('Unknown file type');
-                }*/
-
-
+                const blobUrl = URL.createObjectURL(currentFile);
+                console.log("blobUrl-->", blobUrl)
                 const readFile = (file) => {
                     return new Promise((resolve, reject) => {
                         const fileReader = new FileReader();
+                        console.log("hijra", fileReader)
                         fileReader.onloadend = () => {
                             const attachmentUrl = fileReader.result;
                             const newMessage = {
@@ -250,6 +221,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                 chatId: chat.id,
                                 attachmentUrl,
                             };
+
                             resolve(newMessage);
                         };
 
@@ -262,20 +234,25 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
                 try {
                     const newMessage = await readFile(currentFile);
+                    console.log("jijra:", newMessage.attachmentUrl)
+                    // delete newMessage.attachmentUrl;
                     newMessages.push(newMessage);
+                    console.log("hijra-bhai", newMessages)
                     setInbox((prevInbox) => [...prevInbox, newMessage]);
                 } catch (error) {
                     console.error("Error reading file:", error);
                 }
             }
             setMessage("");
-            setFile(null);
+            setFile([]);
             setUrl(message?.attachmentUrl || message);
             setFilePreview(null);
 
 
             if (newMessages.length > 0) {
+
                 socket.emit("message", newMessages);
+                console.log("channa-mereya")
             }
         } else {
             const newMessage = {
@@ -290,7 +267,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
             setInbox((prevInbox) => [...prevInbox, newMessage]);
             setMessage("");
-            setFile(null);
+            setFile([]);
             setFilePreview(null);
             setUrl(message?.attachmentUrl);
 
@@ -299,6 +276,10 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
         // g.click()
 
+        if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+        }
+        // setLoading(false);
     };
 
     useEffect(() => {
@@ -395,24 +376,22 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
     useEffect(() => {
         const chatHistoryElement = chatHistoryRef.current;
         const handleScroll = () => {
-            // console.log('scrollTop:', chatHistoryElement.scrollTop);
+            const scrollTop = chatHistoryElement.scrollTop
             const threshold = -5000;
 
             // Check if the scroll is at the top to load more messages
-            if (chatHistoryElement.scrollTop <= threshold && hasMore) {
-                if (messagesLength > inbox.length) {
-                    setHasMore(true);
-                } else {
-                    setHasMore(false);
-                }
-            }
-        };
-        chatHistoryElement.addEventListener('scroll', handleScroll);
+            if (scrollTop < threshold && messagesLength > inbox.length) {
+                setHasMore(true)
+            } else setHasMore(false)
+        }
 
+        chatHistoryElement.addEventListener('scroll', handleScroll);
         return () => {
             chatHistoryElement.removeEventListener('scroll', handleScroll);
-        };
+        }
+
     }, [inbox, hasMore]);
+
 
     function getformat(fileType) {
         let object = {
@@ -422,14 +401,29 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
             "video/mp4": "mp4",
             "application/vnd.ms-powerpoint": "ppt",
             "text/plain": "txt",
-            "application/vnd.openxmlformats": "docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
             "application/msword": "doc",
             "application/vnd.ms-excel": "xls",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-            "application/x-zip-compressed": "zip",
-            "": "data:application/octet-stream",
+            "application/zip": "zip",
+            "application/x-rar-compressed": "rar",
+            "application/x-tar": "tar",
+            "application/x-gzip": "gz",
+            "audio/mpeg": "mp3",
+            "audio/wav": "wav",
+            "video/x-msvideo": "avi",
+            "video/x-matroska": "mkv",
+            "image/gif": "gif",
+            "image/bmp": "bmp",
+            "image/svg+xml": "svg",
+            "text/html": "html",
+            "text/css": "css",
+            "text/javascript": "js",
+            "application/json": "json",
+            "application/xml": "xml",
+            "application/octet-stream": "bin",
         };
-        return object[fileType];
+        return object[fileType] || "unknown";
     }
 
 
@@ -574,22 +568,22 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                                 alignItems: "end",
                                                                                                 justifyContent: "center",
                                                                                                 overflow: "hidden",
-                                                                                                backgroundColor:"lightgray"
+                                                                                                backgroundColor: "lightgray"
                                                                                             }}
                                                                                         >
-                                                                                            {/*<FileIcon*/}
-                                                                                            {/*    extension={ attachmentUrl.split('.').pop()}*/}
-                                                                                            {/*    {...defaultStyles[attachmentUrl.split('.').pop()]}*/}
-                                                                                            {/*/>*/}
+                                                                                            <FileIcon
+                                                                                                extension={fileTypeExtension}
+                                                                                                {...defaultStyles[fileTypeExtension]}
+                                                                                            />
                                                                                         </div>
                                                                                         <div
                                                                                             className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
                                                                                             <div
                                                                                                 className='w-[20px]'>
-                                                                                                {/*<FileIcon*/}
-                                                                                                {/*    extension={ attachmentUrl.split('.').pop()}*/}
-                                                                                                {/*    {...defaultStyles[ attachmentUrl.split('.').pop()]}*/}
-                                                                                                {/*/>*/}
+                                                                                                <FileIcon
+                                                                                                    extension={attachmentUrl.split('.').pop()}
+                                                                                                    {...defaultStyles[attachmentUrl.split('.').pop()]}
+                                                                                                />
                                                                                             </div>
                                                                                             <p className="text-white hover:underline">
                                                                                                 {`View ${fileTypeExtension} attachment`}
@@ -663,35 +657,64 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                 <div className="w-[496px]">
                                                                                     {fileTypes.map((fileType) => {
                                                                                         const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
-                                                                                        const isSenderUrlExists = fileAttachmentUrl?.startsWith(`data:${fileType.filetype}`)
-                                                                                        const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileType.extension)
+                                                                                        console.log("fileAttachmentUrl-->", fileAttachmentUrl)
+
+                                                                                        const fileTypeMime = fileAttachmentUrl?.split(';')?.shift();
+                                                                                        console.log("fileTypeMime", fileTypeMime)
+
+                                                                                        const fileTypeExtension = getformat(message?.filetype)
+                                                                                        console.log("fileTypeExtension-->", fileTypeExtension)
 
 
-                                                                                        // const fileTypeMime = fileAttachmentUrl.split('/').shift();
-                                                                                        // console.log("fileTypeMime", fileTypeMime)
+                                                                                        const isSenderUrlExists = fileAttachmentUrl?.startsWith(fileTypeMime)
+                                                                                        console.log("isSenderExists-->", isSenderUrlExists)
+
+                                                                                        const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileTypeExtension)
+                                                                                        console.log("isReceiverExists-->", isReceiverUrlExists)
 
 
                                                                                         if (isSenderUrlExists || isReceiverUrlExists) {
                                                                                             return (
                                                                                                 <div
-                                                                                                    key={fileType.extension}
+                                                                                                    key={fileTypeExtension}
                                                                                                     className="flex flex-col">
                                                                                                     <div
                                                                                                         className="attachment-thumbnail rounded-t-xl"
                                                                                                         style={{
-                                                                                                            backgroundImage: `url(${fileType.background})`,
-                                                                                                            backgroundSize: "cover",
                                                                                                             width: "496px",
-                                                                                                            height: "200px",
-                                                                                                            // backgroundColor: "#f8f9fa",
+                                                                                                            height: "250px",
+                                                                                                            display: "flex",
+                                                                                                            alignItems: "end",
+                                                                                                            justifyContent: "center",
+                                                                                                            overflow: "hidden",
+                                                                                                            position: "relative",
+                                                                                                            backgroundColor: "#f8f9fa",
                                                                                                         }}
-                                                                                                    ></div>
+                                                                                                    >
+                                                                                                        <FileIcon
+                                                                                                            extension={fileTypeExtension}
+                                                                                                            {...defaultStyles[fileTypeExtension]}
+
+                                                                                                            style={{
+                                                                                                                position: "absolute",
+                                                                                                                maxWidth: "100%",
+                                                                                                                maxHeight: "100%",
+                                                                                                            }}
+                                                                                                        />
+                                                                                                    </div>
                                                                                                     <div
                                                                                                         className="flex justify-between bg-gray-800 shadow-lg py-5 px-2
                                                                                             rounded-b-xl">
-                                                                                                        <div>{fileType.icon}</div>
-                                                                                                        <p className="text-white hover:underline mt-2">
-                                                                                                            {fileType.title || "View File"}
+                                                                                                        <div
+                                                                                                            className='w-[20px]'>
+                                                                                                            <FileIcon
+                                                                                                                extension={fileTypeExtension}
+                                                                                                                {...defaultStyles[fileTypeExtension]}
+                                                                                                            />
+                                                                                                        </div>
+
+                                                                                                        <p className="text-white hover:underline">
+                                                                                                            {`View ${fileTypeExtension} attachment`}
                                                                                                         </p>
                                                                                                         <div>
                                                                                                             <Oval
@@ -716,8 +739,14 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
                                                                             <>
                                                                                 <div className="w-[496px]">
-                                                                                    {fileTypes.map((fileType) => {
+                                                                                    {/*<RuntimeAttachmentsOnSender*/}
+                                                                                    {/*    message={message}/>*/}
+
+                                                                                    {
+                                                                                        fileTypes.map((fileType) => {
                                                                                             const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
+                                                                                            console.log("fileAttachmentUrl-->", fileAttachmentUrl)
+
                                                                                             const fileTypeMime = fileAttachmentUrl?.split(';')?.shift();
                                                                                             console.log("fileTypeMime", fileTypeMime)
 
@@ -726,7 +755,11 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
 
                                                                                             const isSenderUrlExists = fileAttachmentUrl?.startsWith(fileTypeMime)
+                                                                                            console.log("isSenderExists-->", isSenderUrlExists)
+
                                                                                             const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileTypeExtension)
+                                                                                            console.log("isReceiverExists-->", isReceiverUrlExists)
+
 
                                                                                             if (isSenderUrlExists || isReceiverUrlExists) {
                                                                                                 return (
@@ -746,16 +779,16 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                                                 backgroundColor: "#f8f9fa",
                                                                                                             }}
                                                                                                         >
-                                                                                                            {/*<FileIcon*/}
-                                                                                                            {/*    extension={fileTypeExtension}*/}
-                                                                                                            {/*    {...defaultStyles[fileTypeExtension]}*/}
+                                                                                                            <FileIcon
+                                                                                                                extension={fileTypeExtension}
+                                                                                                                {...defaultStyles[fileTypeExtension]}
 
-                                                                                                            {/*    style={{*/}
-                                                                                                            {/*        position: "absolute",*/}
-                                                                                                            {/*        maxWidth: "100%",*/}
-                                                                                                            {/*        maxHeight: "100%",*/}
-                                                                                                            {/*    }}*/}
-                                                                                                            {/*/>*/}
+                                                                                                                style={{
+                                                                                                                    position: "absolute",
+                                                                                                                    maxWidth: "100%",
+                                                                                                                    maxHeight: "100%",
+                                                                                                                }}
+                                                                                                            />
                                                                                                         </div>
 
                                                                                                         <div
@@ -764,6 +797,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                                                 className='w-[20px]'>
                                                                                                                 <FileIcon
                                                                                                                     extension={fileTypeExtension}
+                                                                                                                    {...defaultStyles[fileTypeExtension]}
                                                                                                                 />
                                                                                                             </div>
 
@@ -783,9 +817,10 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                                                                                     </div>
                                                                                                 );
                                                                                             }
+                                                                                        })
+                                                                                    }
 
-                                                                                        }
-                                                                                    )}
+
                                                                                 </div>
                                                                             </>
                                                                         }
@@ -852,6 +887,7 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
                                 >
                                     <FileIcon
                                         extension={sFile.name.split('.').pop()}
+                                        {...defaultStyles[sFile.name.split('.').pop()]}
                                     />
                                 </div>
                             );
@@ -862,33 +898,17 @@ export default function SingleChatPage({selectedUser, chat, socket, file, setFil
 
 
             <div className="chat-message border-t border-gray-700">
-                <div className="input-group mb-0 flex bg-gray-800 p-2 rounded-lg">
-                    <form onSubmit={handleSendMessage} className="flex justify-center items-center w-full">
-                        <input
-                            onChange={(e) => setMessage(e.target.value)}
-                            value={message}
-                            name="message"
-                            className="flex-grow p-4 bg-gray-700 text-white outline-none rounded-lg resize-none placeholder-gray-400"
-                            placeholder="Enter text here..."
-                        />
-                        <div className={'flex justify-center items-center'}>
-                            <label htmlFor="file" className="ml-2 text-gray-400 hover:text-gray-200 cursor-pointer">
-                                <MdAttachment className="text-3xl"/>
-                            </label>
-                            <input
-                                type="file"
-                                id="file"
-                                multiple={true}
-                                hidden
-                                onChange={handleFileUpload}
-                            />
-                        </div>
-                        <button type="submit" className="ml-2 text-gray-400 hover:text-gray-200">
-                            <IoMdSend className="text-3xl"/>
-                        </button>
-                    </form>
-                </div>
+                <InputForm
+                    message={message}
+                    setMessage={setMessage}
+                    file={file}
+                    fileInputRef={fileInputRef}
+                    onChange={handleFileUpload}
+                    handleSendMessage={handleSendMessage}
+                />
             </div>
+
+
         </div>
     );
 }

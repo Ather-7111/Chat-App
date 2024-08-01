@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import "./style.css";
 import {getAllUsers} from "@/lib/actions/user";
 import {createChat} from "@/lib/actions/chat";
@@ -19,11 +19,13 @@ export default function ChatPage() {
     const [notifyText, setNotifyText] = useState("");
     const [file, setFile] = useState([]);
     const [filePreview, setFilePreview] = useState(null)
-    // const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(false);
 
 
     const loggedInUserId = localStorage.getItem("userId");
     const loggedInUserName = localStorage.getItem("userName");
+
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         const newSocket = io("http://localhost:3000");
@@ -85,9 +87,9 @@ export default function ChatPage() {
 
     const handleSelectUser = async (user) => {
         setSelectedUser(user);
-        // setHasMore(false)
+        setHasMore(false)
         setChat("");
-        setFile(['']);
+        setFile([]);
         setFilePreview(null);
         const chat = await createChat({
             name: "Discussion",
@@ -107,7 +109,14 @@ export default function ChatPage() {
             ...prev,
             [user.id]: 0,
         }));
+
+        // Reset file input field
+        if (fileInputRef.current) {
+            fileInputRef.current.value = null;
+        }
     };
+
+
 
     return (
         <div className="flex h-screen bg-gray-900 text-white">
@@ -133,6 +142,7 @@ export default function ChatPage() {
                             <li
                                 key={id}
                                 className="flex items-center p-2 rounded-lg hover:bg-gray-700 cursor-pointer"
+                                id='id'
                                 onClick={() => handleSelectUser(user)}
                             >
                                 <img
@@ -166,8 +176,9 @@ export default function ChatPage() {
                         setFile={setFile}
                         filePreview={filePreview}
                         setFilePreview={setFilePreview}
-                        // hasMore={hasMore}
-                        // setHasMore={setHasMore}
+                        fileInputRef={fileInputRef}
+                        hasMore={hasMore}
+                        setHasMore={setHasMore}
                     />
                 )}
             </div>

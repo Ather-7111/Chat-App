@@ -7,13 +7,10 @@ const io = require("socket.io")(3000, {
         origin: "http://localhost:3001",
         methods: ["GET", "POST"],
     },
+    // for larger files--->
+    maxHttpBufferSize: 1e8,  // 100 MB buffer size for large messages
+    pingTimeout: 60000      // 60s buffer for timeout
 });
-
-// async function testFunction(){
-//   const k = await getAllAttachments("clygzx7p10001pa9k4qiwj21w");
-// console.log(k)
-// }
-// testFunction()
 
 io.on("connection", (socket) => {
     console.log("Socket connected --> id : ", socket.id);
@@ -32,6 +29,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("message", async (messages) => {
+        console.log("charsi", messages)
         try {
             if (!Array.isArray(messages)) {
                 messages = [messages];
