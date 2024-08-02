@@ -19,7 +19,7 @@ function getformat(fileType) {
     return object[fileType];
 }
 
-const RuntimeAttachmentsOnSender = (message) => {
+const RuntimeAttachments = (message) => {
 
     console.log("message", message.message.attachmentUrl)
     const fileAttachmentUrl =  message.message.attachmentUrl || message?.attachment?.url
@@ -96,4 +96,4 @@ const RuntimeAttachmentsOnSender = (message) => {
     }
 }
 
-export default RuntimeAttachmentsOnSender
+export default RuntimeAttachments

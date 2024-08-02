@@ -11,7 +11,7 @@ import "react-image-gallery/styles/css/image-gallery.css";
 import {Oval} from "react-loader-spinner";
 import {FileIcon, defaultStyles} from "react-file-icon"
 import InputForm from "@/components/InputForm/inputForm";
-import RuntimeAttachmentsOnSender from "@/components/RuntimeAttachmentsOnSender/runtimeAttachmentsOnSender";
+import RuntimeAttachments from "@/components/RuntimeAttachments/runtimeAttachments";
 import {debounce} from "next/dist/server/utils";
 import LoadingAttachments from "@/components/LoadingAttachments/loadingAttachments";
 
@@ -325,6 +325,13 @@ export default function SingleChatPage({
         return inlineImagePattern.test(url) || imageExtensionsPattern.test(url);
     };
 
+    const isVideo = (url) => {
+        if (!url) return false;
+        const inlineVideoPattern = /^data:video\/(mp4|webm);base64,/i;
+        const videoExtensionsPattern = /\.(mp4|mkv|avi|mov|webm)$/i;
+        return inlineVideoPattern.test(url) || videoExtensionsPattern.test(url);
+    };
+
     const attachmentUrl = (message?.attachment?.url || message?.attachmentUrl?.url) || message?.attachmentUrl;
 
 
@@ -399,7 +406,6 @@ export default function SingleChatPage({
             "image/png": "png",
             "image/jpeg": "jpg",
             "application/pdf": "pdf",
-            "video/mp4": "mp4",
             "application/vnd.ms-powerpoint": "ppt",
             "text/plain": "txt",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -484,8 +490,6 @@ export default function SingleChatPage({
 
                         return (
                             <li className={containerClass} key={index}>
-
-
                                 <div className={messageClass}>
                                     {/* For text */}
                                     {message?.text && message?.text !== "" ? (
@@ -523,53 +527,61 @@ export default function SingleChatPage({
                                                                                         onClick={() => handleImageClick(attachment, index, message?.id)}
                                                                                     />
                                                                                 </div>
-                                                                            ) : (
-                                                                                <div className=" w-[496px]">
-                                                                                    <div
-                                                                                        key={fileType.title}
-                                                                                        className="flex flex-col">
-                                                                                        <div
-                                                                                            className="attachment-thumbnail rounded-t-xl"
-                                                                                            style={{
-                                                                                                width: "496px",
-                                                                                                height: "250px",
-                                                                                                display: "flex",
-                                                                                                alignItems: "end",
-                                                                                                justifyContent: "center",
-                                                                                                overflow: "hidden",
-                                                                                                backgroundColor: "lightgray"
-                                                                                            }}
-                                                                                        >
-                                                                                            <FileIcon
-                                                                                                extension={fileTypeExtension}
-                                                                                                {...defaultStyles[fileTypeExtension]}
-                                                                                            />
+                                                                            ) : (<>
+                                                                                    {isVideo(attachmentUrl) ? (
+                                                                                        <div>
+                                                                                            <video src={attachmentUrl}
+                                                                                                   controls={true}
+                                                                                                   className="w-[496px] h-[300px] rounded-lg cursor-pointer"/>
                                                                                         </div>
-                                                                                        <div
-                                                                                            className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
+                                                                                    ) : (
+                                                                                        <div className=" w-[496px]">
                                                                                             <div
-                                                                                                className='w-[20px]'>
-                                                                                                <FileIcon
-                                                                                                    extension={attachmentUrl.split('.').pop()}
-                                                                                                    {...defaultStyles[attachmentUrl.split('.').pop()]}
-                                                                                                />
+                                                                                                key={fileType.title}
+                                                                                                className="flex flex-col">
+                                                                                                <div
+                                                                                                    className="attachment-thumbnail rounded-t-xl"
+                                                                                                    style={{
+                                                                                                        width: "496px",
+                                                                                                        height: "250px",
+                                                                                                        display: "flex",
+                                                                                                        alignItems: "end",
+                                                                                                        justifyContent: "center",
+                                                                                                        overflow: "hidden",
+                                                                                                        backgroundColor: "lightgray"
+                                                                                                    }}
+                                                                                                >
+                                                                                                    <FileIcon
+                                                                                                        extension={fileTypeExtension}
+                                                                                                        {...defaultStyles[fileTypeExtension]}
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div
+                                                                                                    className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
+                                                                                                    <div
+                                                                                                        className='w-[20px]'>
+                                                                                                        <FileIcon
+                                                                                                            extension={attachmentUrl.split('.').pop()}
+                                                                                                            {...defaultStyles[attachmentUrl.split('.').pop()]}
+                                                                                                        />
+                                                                                                    </div>
+                                                                                                    <p className="text-white hover:underline">
+                                                                                                        {`View ${fileTypeExtension} attachment`}
+                                                                                                    </p>
+                                                                                                    <a
+                                                                                                        href={attachmentUrl}
+                                                                                                        target="_blank"
+                                                                                                        download
+                                                                                                        className="flex items-center cursor-pointer text-white hover:underline "
+                                                                                                    >
+                                                                                                        <IoMdDownload
+                                                                                                            className="mr-1"/>
+                                                                                                    </a>
+                                                                                                </div>
                                                                                             </div>
-                                                                                            <p className="text-white hover:underline">
-                                                                                                {`View ${fileTypeExtension} attachment`}
-                                                                                            </p>
-                                                                                            <a
-                                                                                                href={attachmentUrl}
-                                                                                                target="_blank"
-                                                                                                download
-                                                                                                className="flex items-center cursor-pointer text-white hover:underline "
-                                                                                            >
-                                                                                                <IoMdDownload
-                                                                                                    className="mr-1"/>
-                                                                                            </a>
-                                                                                        </div>
-                                                                                    </div>
 
-                                                                                </div>
+                                                                                        </div>
+                                                                                    )}</>
                                                                             )}
                                                                         </div>
                                                                     );
@@ -578,50 +590,88 @@ export default function SingleChatPage({
                                                         ) : (
                                                             // to show attachments on sender node in runtime
                                                             <div className="flex">
-                                                                {isImage(message?.attachmentUrl || message?.attachment?.url) ? (
+                                                                {(isImage(message?.attachmentUrl || message?.attachment?.url) ||
+                                                                    isVideo(message?.attachmentUrl || message?.attachment?.url)) ? (
                                                                     <>
                                                                         {
                                                                             loading ? <>
-                                                                                    <div className="relative mt-2">
-                                                                                        <img
-                                                                                            src={
-                                                                                                message?.attachmentUrl?.startsWith('data:image')
-                                                                                                    ? message?.attachmentUrl : message?.attachment?.url
-                                                                                            }
-                                                                                            alt="attachment12"
-                                                                                            className="w-[240px] h-[200px] rounded-lg blur-sm"
-                                                                                        />
+                                                                                {isImage(message?.attachmentUrl || message?.attachment?.url) ?
+                                                                                    (
+                                                                                        <div className="relative mt-2">
+                                                                                            <img
+                                                                                                src={
+                                                                                                    message?.attachmentUrl?.startsWith('data:image')
+                                                                                                        ? message?.attachmentUrl : message?.attachment?.url
+                                                                                                }
+                                                                                                alt="attachment12"
+                                                                                                className="w-[240px] h-[200px] rounded-lg blur-sm"
+                                                                                            />
+                                                                                            <div
+                                                                                                className="absolute inset-0 flex items-center justify-center">
+                                                                                                <Oval
+                                                                                                    visible={true}
+                                                                                                    height="50"
+                                                                                                    width="50"
+                                                                                                    color="#4fa94d"
+                                                                                                    ariaLabel="oval-loading"
+                                                                                                    wrapperStyle={{}}
+                                                                                                    wrapperClass=""
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <div className="relative mt-2">
+                                                                                            <video
+                                                                                                src={
+                                                                                                    message?.attachmentUrl?.startsWith('data:video')
+                                                                                                        ? message?.attachmentUrl : message?.attachment?.url
+                                                                                                }
+                                                                                                className="w-[496px] h-[300px] rounded-lg blur-sm"
+                                                                                            />
+                                                                                            <div
+                                                                                                className="absolute inset-0 flex items-center justify-center">
+                                                                                                <Oval
+                                                                                                    visible={true}
+                                                                                                    height="50"
+                                                                                                    width="50"
+                                                                                                    color="#4fa94d"
+                                                                                                    ariaLabel="oval-loading"
+                                                                                                    wrapperStyle={{}}
+                                                                                                    wrapperClass=""
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )
+                                                                                }
+                                                                            </> : <>
+                                                                                {isImage(message?.attachmentUrl || message?.attachment?.url) ?
+                                                                                    (
                                                                                         <div
-                                                                                            className="absolute inset-0 flex items-center justify-center">
-                                                                                            <Oval
-                                                                                                visible={true}
-                                                                                                height="50"
-                                                                                                width="50"
-                                                                                                color="#4fa94d"
-                                                                                                ariaLabel="oval-loading"
-                                                                                                wrapperStyle={{}}
-                                                                                                wrapperClass=""
+                                                                                            className="image-preview mt-2">
+                                                                                            <img
+                                                                                                src={
+                                                                                                    message?.attachmentUrl?.startsWith('data:image')
+                                                                                                        ? message?.attachmentUrl : message?.attachment?.url
+                                                                                                }
+                                                                                                alt="attachment12"
+                                                                                                className="w-[240px] h-[200px] rounded-lg"
                                                                                             />
                                                                                         </div>
-                                                                                    </div>
-                                                                                </> :
-                                                                                <>
-                                                                                    <div className="image-preview mt-2">
-                                                                                        <img
-                                                                                            src={
-                                                                                                message?.attachmentUrl?.startsWith('data:image')
-                                                                                                    ? message?.attachmentUrl : message?.attachment?.url
-                                                                                            }
-                                                                                            alt="attachment12"
-                                                                                            className="w-[240px] h-[200px] rounded-lg"
-                                                                                        />
-                                                                                    </div>
-                                                                                </>
+                                                                                    ) : (
+                                                                                        <div>
+                                                                                            <video
+                                                                                                src={attachmentUrl}
+                                                                                                controls={true}
+                                                                                                className="w-[496px] h-[300px] rounded-lg cursor-pointer"/>
+                                                                                        </div>
+                                                                                    )
+                                                                                }
+                                                                            </>
                                                                         }
-
                                                                     </>
                                                                 ) : (
                                                                     <>
+                                                                        {/*Attachment loading and display*/}
                                                                         {loading ? <>
                                                                                 <div className="w-[496px]">
                                                                                     <LoadingAttachments
@@ -630,7 +680,7 @@ export default function SingleChatPage({
                                                                             </>
                                                                             : <>
                                                                                 <div className="w-[496px]">
-                                                                                    <RuntimeAttachmentsOnSender
+                                                                                    <RuntimeAttachments
                                                                                         message={message}/>
                                                                                 </div>
                                                                             </>
