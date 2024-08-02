@@ -1,5 +1,5 @@
+import {Oval} from "react-loader-spinner";
 import {defaultStyles, FileIcon} from "react-file-icon";
-import {IoMdDownload} from "react-icons/io";
 
 function getformat(fileType) {
     let object = {
@@ -19,10 +19,9 @@ function getformat(fileType) {
     return object[fileType];
 }
 
-const RuntimeAttachmentsOnSender = (message) => {
-
-    console.log("message", message.message.attachmentUrl)
-    const fileAttachmentUrl =  message.message.attachmentUrl || message?.attachment?.url
+const LoadingAttachments = (message)=>{
+    console.log("message", message?.message?.attachmentUrl)
+    const fileAttachmentUrl = message?.message?.attachmentUrl || message?.attachment?.url
     console.log("fileAttachmentUrl-->", fileAttachmentUrl)
 
     const fileTypeMime = fileAttachmentUrl?.split(';')?.shift();
@@ -67,7 +66,6 @@ const RuntimeAttachmentsOnSender = (message) => {
                         }}
                     />
                 </div>
-
                 <div
                     className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
                     <div
@@ -81,19 +79,21 @@ const RuntimeAttachmentsOnSender = (message) => {
                     <p className="text-white hover:underline">
                         {`View ${fileTypeExtension} attachment`}
                     </p>
-                    <a
-                        href={fileAttachmentUrl || "no url"}
-                        target="_blank"
-                        download={true}
-                        className="flex items-center cursor-pointer text-white hover:underline "
-                    >
-                        <IoMdDownload
-                            className="mr-1"/>
-                    </a>
+                    <div>
+                        <Oval
+                            visible={true}
+                            height="20"
+                            width="20"
+                            color="#fff"
+                            ariaLabel="oval-loading"
+                            wrapperStyle={{}}
+                            wrapperClass=""
+                        />
+                    </div>
                 </div>
             </div>
-        );
+        )
     }
 }
 
-export default RuntimeAttachmentsOnSender
+export default LoadingAttachments

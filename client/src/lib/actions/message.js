@@ -7,12 +7,12 @@ export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
         let prisma = await connect();
         let allMessagesLength = await prisma.message.findMany({where:{chatId:chatId}});
         allMessagesLength=allMessagesLength.length;
-        console.log("loadIndex", loadIndex,"hijra",allMessagesLength);
+        console.log("loadIndex", loadIndex,"allMessagesLength",allMessagesLength);
 
         const skipExpression = allMessagesLength - (15 * loadIndex);
         const skipValue = (skipExpression < 0) ? 0 : skipExpression;
         let takeValue = (skipExpression < 0) ? (skipExpression + 15) : 15
-        console.log("skip-->", skipValue,"takeVlaue:",takeValue);
+        console.log("skip-->", skipValue,"take-->:",takeValue);
         let maxLoadIndex = (Math.round(allMessagesLength / 15)) + 1
         if (loadIndex > maxLoadIndex) {
             takeValue = 0
@@ -42,12 +42,7 @@ export async function getAllMessages(userId, otherUserId, chatId, loadIndex) {
             //     createdAt: "asc",
             // },
         });
-        // console.log(messages.map((msg) => ({
-        //   ...msg,
-        //   from: msg.senderId,
-        //   to: msg.receiverId,
-        // })))
-        console.log("sigma-bhola", messages.length)
+        console.log("displayedMessagesLength-->", messages.length)
         messages.forEach((e) => {
             delete e.attachementUrl
         })

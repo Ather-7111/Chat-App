@@ -13,6 +13,7 @@ import {FileIcon, defaultStyles} from "react-file-icon"
 import InputForm from "@/components/InputForm/inputForm";
 import RuntimeAttachmentsOnSender from "@/components/RuntimeAttachmentsOnSender/runtimeAttachmentsOnSender";
 import {debounce} from "next/dist/server/utils";
+import LoadingAttachments from "@/components/LoadingAttachments/loadingAttachments";
 
 
 export default function SingleChatPage({
@@ -446,7 +447,7 @@ export default function SingleChatPage({
                 </div>
             </div>
 
-            {/*-- Load Previous Messages Btn ---*/}
+            {/*------------- Load Previous Messages Btn --------------*/}
             {
                 hasMore && <div className="flex items-center justify-center ">
                     <button className="bg-gray-500 text-white px-3 py-2 my-2 text-xs rounded-2xl"
@@ -463,15 +464,7 @@ export default function SingleChatPage({
             >
                 <ul className="m-b-0">
                     {inbox.map((message, index) => {
-                        // console.log("message-->", message);
-                        // console.log("LU-->", loggedInUserId);
-                        // console.log("senderId", message?.senderId);
-
-                        const isSentByCurrentUser = message?.senderId === loggedInUserId;
-                        // console.log("isSentByCurrentUser", isSentByCurrentUser);
-
                         const isReceiver = message.senderId !== loggedInUserId;
-                        // console.log("isReceiver", isReceiver);
 
                         const containerClass = isReceiver
                             ? "flex justify-start mb-2"
@@ -488,21 +481,6 @@ export default function SingleChatPage({
                         const fileType = message.attachment
                             ? message.attachment.url.split(".").pop()
                             : "";
-                        const fileTypeInfo = fileTypes.find(
-                            (type) => type.extension === fileType
-                        );
-
-                        const images = message.attachments
-                            ? message.attachments.map((attachment) => ({
-                                src: attachment.url || attachment.attachmentUrl?.url,
-                                alt: 'attachment',
-                            }))
-                            : [
-                                {
-                                    src: message.attachmentUrl || message.attachment?.url,
-                                    alt: 'attachment',
-                                },
-                            ];
 
                         return (
                             <li className={containerClass} key={index}>
@@ -531,20 +509,11 @@ export default function SingleChatPage({
                                                                     ${(message?.senderId === loggedInUserId) ? 'flex justify-end' : 'flex justify-start'}`}>
                                                                 {message.attachments.map((attachment, index) => {
                                                                     const attachmentUrl = attachment?.url || attachment?.attachmentUrl?.url;
-                                                                    // const type = fileType(attachmentUrl);
-                                                                    // console.log("type------->" , type)
-
                                                                     const fileTypeExtension = attachmentUrl.split('.').pop();
 
-
-                                                                    console.log("fileType-->", fileType)
-                                                                    // console.log("fileIcon -->", fileIcon)
-
                                                                     return (
-                                                                        <div
-                                                                            key={attachmentUrl}
-                                                                            className="grid-item attachment"
-                                                                        >
+                                                                        <div key={attachmentUrl}
+                                                                             className="grid-item attachment">
                                                                             {isImage(attachmentUrl) ? (
                                                                                 <div>
                                                                                     <img
@@ -655,172 +624,14 @@ export default function SingleChatPage({
                                                                     <>
                                                                         {loading ? <>
                                                                                 <div className="w-[496px]">
-                                                                                    {fileTypes.map((fileType) => {
-                                                                                        const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
-                                                                                        console.log("fileAttachmentUrl-->", fileAttachmentUrl)
-
-                                                                                        const fileTypeMime = fileAttachmentUrl?.split(';')?.shift();
-                                                                                        console.log("fileTypeMime", fileTypeMime)
-
-                                                                                        const fileTypeExtension = getformat(message?.filetype)
-                                                                                        console.log("fileTypeExtension-->", fileTypeExtension)
-
-
-                                                                                        const isSenderUrlExists = fileAttachmentUrl?.startsWith(fileTypeMime)
-                                                                                        console.log("isSenderExists-->", isSenderUrlExists)
-
-                                                                                        const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileTypeExtension)
-                                                                                        console.log("isReceiverExists-->", isReceiverUrlExists)
-
-
-                                                                                        if (isSenderUrlExists || isReceiverUrlExists) {
-                                                                                            return (
-                                                                                                <div
-                                                                                                    key={fileTypeExtension}
-                                                                                                    className="flex flex-col">
-                                                                                                    <div
-                                                                                                        className="attachment-thumbnail rounded-t-xl"
-                                                                                                        style={{
-                                                                                                            width: "496px",
-                                                                                                            height: "250px",
-                                                                                                            display: "flex",
-                                                                                                            alignItems: "end",
-                                                                                                            justifyContent: "center",
-                                                                                                            overflow: "hidden",
-                                                                                                            position: "relative",
-                                                                                                            backgroundColor: "#f8f9fa",
-                                                                                                        }}
-                                                                                                    >
-                                                                                                        <FileIcon
-                                                                                                            extension={fileTypeExtension}
-                                                                                                            {...defaultStyles[fileTypeExtension]}
-
-                                                                                                            style={{
-                                                                                                                position: "absolute",
-                                                                                                                maxWidth: "100%",
-                                                                                                                maxHeight: "100%",
-                                                                                                            }}
-                                                                                                        />
-                                                                                                    </div>
-                                                                                                    <div
-                                                                                                        className="flex justify-between bg-gray-800 shadow-lg py-5 px-2
-                                                                                            rounded-b-xl">
-                                                                                                        <div
-                                                                                                            className='w-[20px]'>
-                                                                                                            <FileIcon
-                                                                                                                extension={fileTypeExtension}
-                                                                                                                {...defaultStyles[fileTypeExtension]}
-                                                                                                            />
-                                                                                                        </div>
-
-                                                                                                        <p className="text-white hover:underline">
-                                                                                                            {`View ${fileTypeExtension} attachment`}
-                                                                                                        </p>
-                                                                                                        <div>
-                                                                                                            <Oval
-                                                                                                                visible={true}
-                                                                                                                height="20"
-                                                                                                                width="20"
-                                                                                                                color="#fff"
-                                                                                                                ariaLabel="oval-loading"
-                                                                                                                wrapperStyle={{}}
-                                                                                                                wrapperClass=""
-                                                                                                            />
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            );
-                                                                                        }
-                                                                                        return null;
-                                                                                    })}
+                                                                                    <LoadingAttachments
+                                                                                        message={message}/>
                                                                                 </div>
                                                                             </>
-                                                                            :
-
-                                                                            <>
+                                                                            : <>
                                                                                 <div className="w-[496px]">
-                                                                                    {/*<RuntimeAttachmentsOnSender*/}
-                                                                                    {/*    message={message}/>*/}
-
-                                                                                    {
-                                                                                        fileTypes.map((fileType) => {
-                                                                                            const fileAttachmentUrl = message?.attachmentUrl || message?.attachment?.url
-                                                                                            console.log("fileAttachmentUrl-->", fileAttachmentUrl)
-
-                                                                                            const fileTypeMime = fileAttachmentUrl?.split(';')?.shift();
-                                                                                            console.log("fileTypeMime", fileTypeMime)
-
-                                                                                            const fileTypeExtension = getformat(message?.filetype)
-                                                                                            console.log("fileTypeExtension-->", fileTypeExtension)
-
-
-                                                                                            const isSenderUrlExists = fileAttachmentUrl?.startsWith(fileTypeMime)
-                                                                                            console.log("isSenderExists-->", isSenderUrlExists)
-
-                                                                                            const isReceiverUrlExists = fileAttachmentUrl?.endsWith(fileTypeExtension)
-                                                                                            console.log("isReceiverExists-->", isReceiverUrlExists)
-
-
-                                                                                            if (isSenderUrlExists || isReceiverUrlExists) {
-                                                                                                return (
-                                                                                                    <div
-                                                                                                        key={fileTypeExtension}
-                                                                                                        className="flex flex-col">
-                                                                                                        <div
-                                                                                                            className="attachment-thumbnail rounded-t-xl"
-                                                                                                            style={{
-                                                                                                                width: "496px",
-                                                                                                                height: "250px",
-                                                                                                                display: "flex",
-                                                                                                                alignItems: "end",
-                                                                                                                justifyContent: "center",
-                                                                                                                overflow: "hidden",
-                                                                                                                position: "relative",
-                                                                                                                backgroundColor: "#f8f9fa",
-                                                                                                            }}
-                                                                                                        >
-                                                                                                            <FileIcon
-                                                                                                                extension={fileTypeExtension}
-                                                                                                                {...defaultStyles[fileTypeExtension]}
-
-                                                                                                                style={{
-                                                                                                                    position: "absolute",
-                                                                                                                    maxWidth: "100%",
-                                                                                                                    maxHeight: "100%",
-                                                                                                                }}
-                                                                                                            />
-                                                                                                        </div>
-
-                                                                                                        <div
-                                                                                                            className="flex justify-between bg-gray-800 shadow-lg py-5 px-2 rounded-b-xl">
-                                                                                                            <div
-                                                                                                                className='w-[20px]'>
-                                                                                                                <FileIcon
-                                                                                                                    extension={fileTypeExtension}
-                                                                                                                    {...defaultStyles[fileTypeExtension]}
-                                                                                                                />
-                                                                                                            </div>
-
-                                                                                                            <p className="text-white hover:underline">
-                                                                                                                {`View ${fileTypeExtension} attachment`}
-                                                                                                            </p>
-                                                                                                            <a
-                                                                                                                href={fileAttachmentUrl || "no url"}
-                                                                                                                target="_blank"
-                                                                                                                download={true}
-                                                                                                                className="flex items-center cursor-pointer text-white hover:underline "
-                                                                                                            >
-                                                                                                                <IoMdDownload
-                                                                                                                    className="mr-1"/>
-                                                                                                            </a>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                );
-                                                                                            }
-                                                                                        })
-                                                                                    }
-
-
+                                                                                    <RuntimeAttachmentsOnSender
+                                                                                        message={message}/>
                                                                                 </div>
                                                                             </>
                                                                         }
