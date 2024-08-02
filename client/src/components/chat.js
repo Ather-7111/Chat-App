@@ -1,9 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import {getAllMessages} from "@/lib/actions/message";
-import {IoMdSend, IoMdDownload} from "react-icons/io";
-import {MdAttachment} from "react-icons/md";
+import {IoMdDownload} from "react-icons/io";
 import {getChat} from "@/lib/actions/chat";
-import {FaFilePdf, FaFilePowerpoint, FaFileWord} from "react-icons/fa";
 import {getAllAttachmentsUsingMsgIds} from "@/lib/actions/attachement";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -12,7 +10,6 @@ import {Oval} from "react-loader-spinner";
 import {FileIcon, defaultStyles} from "react-file-icon"
 import InputForm from "@/components/InputForm/inputForm";
 import RuntimeAttachments from "@/components/RuntimeAttachments/runtimeAttachments";
-import {debounce} from "next/dist/server/utils";
 import LoadingAttachments from "@/components/LoadingAttachments/loadingAttachments";
 
 
@@ -28,23 +25,18 @@ export default function SingleChatPage({
                                            hasMore,
                                            setHasMore
                                        }) {
+
     const [inbox, setInbox] = useState([]);
     const [message, setMessage] = useState("");
     const chatHistoryRef = useRef(null);
-    const [filePreviewUrl, setFilePreviewUrl] = useState("");
-    const [ext, setExt] = useState("");
     const [url, setUrl] = useState('')
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [messageId, setMessageId] = useState('')
     const [selectedImages, setSelectedImages] = useState([])
     const [loading, setLoading] = useState(false)
-    // const [hasMore, setHasMore] = useState(true);
-
-
     const [loadIndex, setLoadIndex] = useState(1)
     const [chatId, setChatId] = useState('')
-
     const [messagesLength, setMessagesLength] = useState('')
 
 
@@ -52,10 +44,7 @@ export default function SingleChatPage({
     console.log("LoggedInUser-->", loggedInUserId)
 
 
-    const fileTypes = [
-        {id: '1'}
-    ];
-
+    // For sockets handling of receiving messages
     useEffect(() => {
         if (socket && chat && chat.id) {
             socket.emit("joinRoom", chat.id);
@@ -84,6 +73,7 @@ export default function SingleChatPage({
                 }
             })
 
+            // Socket handling of message sent successfully after loading
             socket.on('messageSent', (message) => {
                 console.log("message-------->", message)
                 setLoading(false)
@@ -94,25 +84,22 @@ export default function SingleChatPage({
             if (chat.currentMessage) {
                 setInbox((prevInbox) => [...prevInbox, chat.currentMessage]);
             }
-
             loadMessages();
-
             return () => {
                 socket.off("message");
             };
         }
     }, [chat, socket]);
 
+    // Scroll to the bottom whenever inbox updates
     useEffect(() => {
-        // Scroll to the bottom whenever inbox updates
+
         if (chatHistoryRef.current) {
             chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
         }
     }, [inbox]);
 
-
     const loadMessages = async (count) => {
-
         try {
             const chat = await getChat(loggedInUserId, selectedUser.id);
 
@@ -284,12 +271,11 @@ export default function SingleChatPage({
     };
 
     useEffect(() => {
-        // console.log("file extension --------->", ext);
         console.log("inbox-->", inbox);
         console.log("FilePreview", filePreview)
         console.log("file", file)
 
-    }, [inbox, url, selectedImage, lightboxOpen, selectedImages, file, filePreview]);
+    }, [inbox, file, filePreview]);
 
     function formatDate(dateString) {
         const date = new Date(dateString);
@@ -300,13 +286,6 @@ export default function SingleChatPage({
         const strMinutes = minutes < 10 ? "0" + minutes : minutes;
         return `${hours}:${strMinutes} ${ampm}`;
     }
-
-    const isImageFile = (url) => {
-        if (!url) return false; // Check if URL is valid
-        // console.log('Testing URL:', url); // Debugging line
-        // console.log(/\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(url))
-        return /\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(url);
-    };
 
 
     const handleImageClick = (attachment, index, mId) => {
@@ -376,12 +355,6 @@ export default function SingleChatPage({
     }
 
     useEffect(() => {
-        console.log("loadIndex-->", loadIndex)
-        console.log("updatedInbox-->", inbox)
-    }, [loadIndex, inbox]);
-
-
-    useEffect(() => {
         const chatHistoryElement = chatHistoryRef.current;
         const handleScroll = () => {
             const scrollTop = chatHistoryElement.scrollTop
@@ -399,40 +372,6 @@ export default function SingleChatPage({
         }
 
     }, [inbox, hasMore]);
-
-
-    function getformat(fileType) {
-        let object = {
-            "image/png": "png",
-            "image/jpeg": "jpg",
-            "application/pdf": "pdf",
-            "application/vnd.ms-powerpoint": "ppt",
-            "text/plain": "txt",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-            "application/msword": "doc",
-            "application/vnd.ms-excel": "xls",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-            "application/zip": "zip",
-            "application/x-rar-compressed": "rar",
-            "application/x-tar": "tar",
-            "application/x-gzip": "gz",
-            "audio/mpeg": "mp3",
-            "audio/wav": "wav",
-            "video/x-msvideo": "avi",
-            "video/x-matroska": "mkv",
-            "image/gif": "gif",
-            "image/bmp": "bmp",
-            "image/svg+xml": "svg",
-            "text/html": "html",
-            "text/css": "css",
-            "text/javascript": "js",
-            "application/json": "json",
-            "application/xml": "xml",
-            "application/octet-stream": "bin",
-        };
-        return object[fileType] || "unknown";
-    }
-
 
     return (
         <div className="chat h-screen flex flex-col">
@@ -709,7 +648,7 @@ export default function SingleChatPage({
             </div>
 
 
-            {/*---- LightBox modal ----------*/}
+            {/*------------- LightBox modal ----------*/}
             {lightboxOpen && (
                 <Lightbox
                     open={lightboxOpen}
@@ -720,17 +659,12 @@ export default function SingleChatPage({
                 />
             )}
 
-            {/*-------------------------------------------------------------*/}
-
-
             {/*------------ For images preview before sending ----------------*/}
-
             {filePreview && file && (
                 <div className="p-4 flex flex-wrap">
                     {filePreview.map((preview, index) => {
                         const sFile = file[index];
                         const isImage = sFile.type.startsWith('image/');
-
                         if (isImage) {
                             return (
                                 <img
@@ -757,7 +691,7 @@ export default function SingleChatPage({
                 </div>
             )}
 
-
+            {/*--------- Input Form -------*/}
             <div className="chat-message border-t border-gray-700">
                 <InputForm
                     message={message}
@@ -768,8 +702,6 @@ export default function SingleChatPage({
                     handleSendMessage={handleSendMessage}
                 />
             </div>
-
-
         </div>
     );
 }
